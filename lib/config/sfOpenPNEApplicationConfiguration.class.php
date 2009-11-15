@@ -48,9 +48,11 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
       include($file);
     }
 
-    if (sfConfig::get('op_plugin_activation'))
+    require_once dirname(__FILE__).'/../plugin/opPluginManager.class.php';
+    $pluginActivations = opPluginManager::getPluginActivationList();
+    if ($pluginActivations)
     {
-      $pluginActivations = array_merge(array_fill_keys($this->getPlugins(), true), sfConfig::get('op_plugin_activation'));
+      $pluginActivations = array_merge(array_fill_keys($this->getPlugins(), true), $pluginActivations);
       foreach ($pluginActivations as $key => $value)
       {
         if (!in_array($key, $this->getPlugins()))
@@ -83,6 +85,11 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
     }
 
     return $result;
+  }
+
+  public function getDisabledPlugins()
+  {
+    return array_diff($this->getAllPlugins(), $this->getPlugins());
   }
 
   public function getAllPlugins()
@@ -318,8 +325,8 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
       $files = array_merge($files, $libDirs); // library configurations
     }
 
-    $files = array_merge($files, $this->globEnablePlugin($configPath));
-    $files = array_merge($files, $this->globEnablePlugin('/apps/'.sfConfig::get('sf_app').'/'.$configPath));
+    $files = array_merge($files, $this->globEnablePlugin($configPath, false));
+    $files = array_merge($files, $this->globEnablePlugin('/apps/'.sfConfig::get('sf_app').'/'.$configPath, false));
 
     $configs = array();
     foreach (array_unique($files) as $file)
@@ -334,10 +341,16 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
     return $configs;
   }
 
-  public function globEnablePlugin($pattern, $isControllerPath = false)
+  public function globPlugins($pattern, $force = true, $isControllerPath = false)
   {
+    $method = 'getAllPluginPaths';
+    if (!$force)
+    {
+      $method = 'getPluginPaths';
+    }
+
     $dirs = array();
-    $pluginPaths = $this->getPluginPaths();
+    $pluginPaths = $this->$method();
 
     foreach ($pluginPaths as $pluginPath)
     {
@@ -355,6 +368,11 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
     }
 
     return $dirs;
+  }
+
+  public function globEnablePlugin($pattern, $isControllerPath = false)
+  {
+    return $this->globPlugins($pattern, false, $isControllerPath);
   }
 
   public function getGlobalTemplateDir($templateFile)
@@ -388,6 +406,18 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
 
     $this->getConfigCache()->registerConfigHandler('config/community_config.yml', 'opConfigConfigHandler', array('prefix' => 'openpne_community_'));
     include($this->getConfigCache()->checkConfig('config/community_config.yml'));
+  }
+
+  public function filterAutoloadConfig(sfEvent $event, array $config)
+  {
+    // full overwrite this entry because adding exclude item breaks this entry later
+    $config['autoload']['project_model'] = array(
+      'path'      => sfConfig::get('sf_lib_dir').DIRECTORY_SEPARATOR.'model',
+      'exclude'   => $this->getDisabledPlugins(),
+      'recursive' => true,
+    );
+
+    return parent::filterAutoloadConfig($event, $config);
   }
 
   static public function registerZend()
@@ -427,5 +457,17 @@ abstract class sfOpenPNEApplicationConfiguration extends sfApplicationConfigurat
     require_once 'Auth/OpenID/Consumer.php';
     require_once 'Auth/OpenID/FileStore.php';
     require_once 'Auth/OpenID/SReg.php';
+  }
+
+  public function setCacheDir($cacheDir)
+  {
+    $newCacheDir = $cacheDir.DIRECTORY_SEPARATOR.php_sapi_name();
+
+    sfConfig::set('sf_cache_dir', $newCacheDir);
+
+    $filesystem = new sfFilesystem();
+    $filesystem->mkdirs(sfConfig::get('sf_cache_dir'));
+
+    parent::setCacheDir($newCacheDir);
   }
 }

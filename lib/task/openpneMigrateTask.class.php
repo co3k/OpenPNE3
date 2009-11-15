@@ -21,47 +21,49 @@ class openpneMigrateTask extends sfDoctrineBaseTask
 
     $this->addOptions(array(
       new sfCommandOption('target', null, sfCommandOption::PARAMETER_OPTIONAL, 'The target of migration. This must be "OpenPNE" or a plugin name.'),
-      new sfCommandOption('to-version', 'v', sfCommandOption::PARAMETER_OPTIONAL, 'A version'),
-      new sfCommandOption('to-revision', 'r', sfCommandOption::PARAMETER_OPTIONAL, 'A revision'),
       new sfCommandOption('no-update-plugin', null, sfCommandOption::PARAMETER_NONE, 'Do not update plugins'),
       new sfCommandOption('no-build-model', null, sfCommandOption::PARAMETER_NONE, 'Do not build model classes'),
-      new sfCommandOption('execute-generate', null, sfCommandOption::PARAMETER_NONE, 'Do not execute generated script'),
     ));
 
     $this->briefDescription = 'migrate OpenPNE and/or the plugins to newer/older version one';
     $this->detailedDescription = <<<EOF
-The [openpne:migrate|INFO] task lets OpenPNE migrate and/or the plugins newer/older version.
+The [openpne:migrate|INFO] task lets OpenPNE migrate and/or the plugins newer version.
 
 Call it with:
   1.  [./symfony openpne:migrate|INFO]
   2.  [./symfony openpne:migrate --target=opSamplePlugin|INFO]
-  3.  [./symfony openpne:migrate -r 10 --target=OpenPNE|INFO]
-  4.  [./symfony openpne:migrate -v 3.0.2 --target=OpenPNE|INFO]
+  3.  [./symfony openpne:migrate --target=OpenPNE|INFO]
 
-    1. In the first form, any targets, versions and revisions aren't specified.
-       This task executes the migration scripts for OpenPNE and all the plugins to newer version.
+    1. In the first form, any targets aren't specified.
+       This task executes the migration scripts for OpenPNE and all the plugins to newer revision.
 
-    2. In the second form, the specified target (OpenPNE or a plugin) will be migrated newer version.
+    2. In the second form, the specified plugin will be migrated newer revision.
 
-    3. In the third form, the specified target (OpenPNE or a plugin) will be migrated specified revision (internal version).
-
-    4. In the fourth form, the specified target (OpenPNE or a plugin) will be migrated specified version.
-
-  When the specified value of the [-r|INFO] option or the [-v|INFO] option is newer than the current revision of the target, it will be upgraded.
-  And, when the specified value of the [-r|INFO] option or the [-v|INFO] option is older than the current revision of the target, it will be downgraded.
+    3. In the third form, OpenPNE will be migrated newer revision.
 EOF;
   }
 
   protected function execute($arguments = array(), $options = array())
   {
+    new sfDatabaseManager($this->configuration);  // opening connection
+
     @$this->createCacheDirectory();
 
     $oldPluginList = sfFinder::type('dir')->in(sfConfig::get('sf_plugins_dir'));
     if (!$options['no-update-plugin'])
     {
-      $this->installPlugins();
+      $this->installPlugins($options['target']);
     }
     $newPluginList = sfFinder::type('dir')->name('op*Plugin')->maxdepth(1)->in(sfConfig::get('sf_plugins_dir'));
+    foreach ($oldPluginList as $k => $v)
+    {
+      $pluginName = basename($v);
+      if ((bool)Doctrine::getTable('SnsConfig')->get($pluginName.'_needs_data_load', false))
+      {
+        // It needs initializing
+        unset($oldPluginList[$k]);
+      }
+    }
     $installedPlugins = array_map('basename', array_diff($newPluginList, $oldPluginList));
 
     if (!$options['no-build-model'])
@@ -80,21 +82,45 @@ EOF;
       Doctrine::createTablesFromModels($modelDir);
     }
 
-    $targets = array_merge(array('OpenPNE'), $this->getEnabledOpenPNEPlugin());
+    if ($options['target'])
+    {
+      $targets = array($options['target']);
+    }
+    else
+    {
+      $targets = array_merge(array('OpenPNE'), $this->getEnabledOpenPNEPlugin());
+    }
     $databaseManager = new sfDatabaseManager($this->configuration);
     foreach ($targets as $target)
     {
-      $params = array(
-        'version'  => $options['to-version'],
-        'revision' => $options['to-revision'],
-      );
+      if (in_array($target, $installedPlugins))
+      {
+        continue;
+      }
 
-      $this->migrateFromScript($target, $databaseManager, $params);
-    }
+      try
+      {
+        $this->migrateFromScript($target, $databaseManager);
+      }
+      catch (Doctrine_Migration_Exception $e)
+      {
+        if ('OpenPNE' === $target)
+        {
+          throw $e;
+        }
 
-    if ($options['execute-generate'])
-    {
-      $this->migrateFromDiff();
+        $errorText = '';
+
+        $errors = array();
+        preg_match_all('/Error #[0-9]+ \- .*$/m', $e->getMessage(), $errors, PREG_SET_ORDER);
+        foreach ($errors as $error)
+        {
+          $errorText .= $error[0]."\n";
+        }
+
+        $e = new Exception(sprintf("migrating of %s encountered the following errors:\n %s", $target, $errorText));
+        $this->commandApplication->renderException($e);
+      }
     }
 
     $targets = array_merge($targets, $installedPlugins);
@@ -109,11 +135,11 @@ EOF;
     }
   }
 
-  protected function migrateFromScript($target, $databaseManager, $params)
+  protected function migrateFromScript($target, $databaseManager)
   {
     try
     {
-      $migration = new opMigration($this->dispatcher, $databaseManager, $target, null, $params);
+      $migration = new opMigration($this->dispatcher, $databaseManager, $target, null);
       if (!$migration->hasMigrationScriptDirectory())
       {
         $this->logSection('migrate', sprintf('%s is not supporting migration.', $target));
@@ -164,26 +190,6 @@ EOF;
     }
   }
 
-  protected function migrateFromDiff()
-  {
-    $tmpdir = sfConfig::get('sf_cache_dir').'/models_tmp';
-    $this->getFilesystem()->mkdirs($tmpdir);
-    $this->getFilesystem()->remove(sfFinder::type('file')->in(array($tmpdir)));
-
-    @exec('./symfony openpne:generate-migrations');
-
-    $migrationsPath = sfConfig::get('sf_data_dir').'/migrations/generated';
-
-    try
-    {
-      $this->callDoctrineCli('migrate', array('migrations_path' => $migrationsPath));
-    }
-    catch (Exception $e)
-    {
-      $this->migrationException = $e;
-    }
-  }
-
   protected function buildModel()
   {
     $task = new sfDoctrineBuildModelTask($this->dispatcher, $this->formatter);
@@ -193,19 +199,31 @@ EOF;
     $task = new sfDoctrineBuildFiltersTask($this->dispatcher, $this->formatter);
     $task->run();
     $task = new sfCacheClearTask($this->dispatcher, $this->formatter);
-    $task->run();
+    @$task->run();
     $task = new openpnePermissionTask($this->dispatcher, $this->formatter);
-    $task->run();
+    @$task->run();
   }
 
-  protected function installPlugins()
+  protected function installPlugins($target = null)
   {
+    if ('OpenPNE' === $target)
+    {
+      return null;
+    }
+
     $task = new sfCacheClearTask($this->dispatcher, $this->formatter);
-    $task->run();
+    @$task->run();
     $task = new openpnePermissionTask($this->dispatcher, $this->formatter);
-    $task->run();
+    @$task->run();
+
+    $options = array();
+    if ($target)
+    {
+      $options[] = '--target='.$target;
+    }
+
     $task = new opPluginSyncTask($this->dispatcher, $this->formatter);
-    $task->run();
+    $task->run(array(), $options);
   }
 
   protected function getEnabledOpenPNEPlugin()
