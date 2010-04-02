@@ -22,6 +22,73 @@ if (!defined('E_DEPRECATED'))
  */
 class opProjectConfiguration extends sfProjectConfiguration
 {
+  public function generateFixedMethodToDoctrineRecord(sfEvent $event)
+  {
+    if ($event->getSubject() instanceof sfDoctrineBuildModelTask)
+    {
+      if (!sfConfig::get('ebi_no_magic', false))
+      {
+        return;
+      }
+
+      $defnitionTemplate = "\n    public function %s(%s)\n    {\n"
+                         ."        return \$this->_%s('%s'%s);\n"
+                         ."    }\n";
+
+      $config = $event->getSubject()->getCliConfig();
+      $builderOptions = $this->getPluginConfiguration('sfDoctrinePlugin')->getModelBuilderOptions();
+
+      $models = sfFinder::type('file')->name('Base*.php')->in($config['models_path']);
+      foreach ($models as $model)
+      {
+        $code = file_get_contents($model);
+        $newDefinitions = '';
+
+        $matches = array();
+        if (preg_match_all('/@property (\w+) \$(\w+)/', $code, $matches, PREG_SET_ORDER))
+        {
+          foreach ($matches as $match)
+          {
+            $type = $match[1];
+            $property = $match[2];
+            $getter = 'get'.sfInflector::camelize($property);
+            $setter = 'set'.sfInflector::camelize($property);
+
+            // method is already exists
+            if (false !== strpos($code, 'public function '.$getter.'(')
+              || false !== strpos($code, 'public function '.$setter.'(')
+            )
+            {
+              continue;
+            }
+
+            $isColumn = ord($type[0]) >= 97 && ord($type[0]) <= 122; // a to z
+            if ($isColumn)
+            {
+              // it is not related-column
+              if (false === strpos($code, '\'local\' => \''.$property.'\''))
+              {
+                $newDefinitions .= sprintf($defnitionTemplate, $setter, '$value', 'set', $property, ', $value');
+                $newDefinitions .= sprintf($defnitionTemplate, $getter, '', 'get', $property, '');
+              }
+            }
+          }
+        }
+
+        if ($newDefinitions)
+        {
+          $pos = strrpos($code, '}');
+          $tail = substr($code, $pos);
+          $code = substr($code, 0, $pos);
+          $code .= $newDefinitions.$tail;
+        }
+
+        file_put_contents($model, $code);
+      }
+    }
+  }
+
+
   static public function listenToPreCommandEvent(sfEvent $event)
   {
     require_once dirname(__FILE__).'/../behavior/opActivateBehavior.class.php';
@@ -40,6 +107,7 @@ class opProjectConfiguration extends sfProjectConfiguration
     ));
 
     $this->dispatcher->connect('command.pre_command', array(__CLASS__, 'listenToPreCommandEvent'));
+    $this->dispatcher->connect('command.post_command', array($this, 'generateFixedMethodToDoctrineRecord'));
 
     $this->setupProjectOpenPNE();
   }

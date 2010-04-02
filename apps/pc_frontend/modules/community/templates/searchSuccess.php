@@ -26,7 +26,7 @@ $options = array(
   'title'          => __('Search Results'),
   'pager'          => $pager,
   'link_to_page'   => 'community/search?page=%d',
-  'link_to_detail' => 'community/home?id=%d',
+  'link_to_detail' => '@community_home?id=%d',
   'list'           => $list,
 );
 

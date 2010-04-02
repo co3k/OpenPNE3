@@ -5,7 +5,7 @@ foreach ($categories as $key => $value)
 {
   if (count($value))
   {
-    $list[$key] = link_to(__($categoryCaptions[$key]), 'member/config?category='.$key);
+    $list[$key] = link_to(__($categoryCaptions[$key]), '@member_config?category='.$key);
   }
 }
 op_include_parts('pageNav', 'pageNav', array('list' => $list, 'current' => $categoryName));
@@ -13,14 +13,14 @@ op_include_parts('pageNav', 'pageNav', array('list' => $list, 'current' => $cate
 
 <?php
 $list = array(
-  link_to(__('Connecting with External Application'), 'connection/list'),
-  link_to(__('OpenID Configuration'), 'OpenID/list'),
+  link_to(__('Connecting with External Application'), '@connection_list'),
+  link_to(__('OpenID Configuration'), '@openid_list'),
 );
 op_include_parts('pageNav', 'connection', array('list' => $list));
 ?>
 
 <?php
-$list = array(link_to(__('Delete your %1% account', array('%1%' => $op_config['sns_name'])), 'member/delete'));
+$list = array(link_to(__('Delete your %1% account', array('%1%' => $op_config['sns_name'])), '@member_delete'));
 op_include_parts('pageNav', 'navForDelete', array('list' => $list));
 ?>
 <?php end_slot(); ?>
