@@ -31,4 +31,12 @@ class CommunityMemberPositionTable extends Doctrine_Table
     }
     return $results;
   }
+
+  public function findByMemberIdAndName($id, $name)
+  {
+    return $this->createQuery()
+        ->where('id = ?', $id)
+        ->andWhere('name = ?', $name)
+        ->execute();
+  }
 }

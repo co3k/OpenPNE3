@@ -68,8 +68,21 @@ class opProjectConfiguration extends sfProjectConfiguration
               // it is not related-column
               if (false === strpos($code, '\'local\' => \''.$property.'\''))
               {
-                $newDefinitions .= sprintf($defnitionTemplate, $setter, '$value', 'set', $property, ', $value');
-                $newDefinitions .= sprintf($defnitionTemplate, $getter, '', 'get', $property, '');
+                $setterArgument = ', $value';
+                $getterArgument = '';
+                if ('timestamp' === $type)
+                {
+                  $setterArgument .= ', true, true';
+                  $getterArgument .= ', true, true';
+                }
+                else
+                {
+                  $setterArgument .= ', true, false';
+                  $getterArgument .= ', true, false';
+                }
+
+                $newDefinitions .= sprintf($defnitionTemplate, $setter, '$value', 'set', $property, $setterArgument);
+                $newDefinitions .= sprintf($defnitionTemplate, $getter, '', 'get', $property, $getterArgument);
               }
             }
           }
@@ -166,11 +179,21 @@ class opProjectConfiguration extends sfProjectConfiguration
 
   protected function setOpenPNEConfiguration()
   {
-    $path = OPENPNE3_CONFIG_DIR.'/OpenPNE.yml';
-    $config = sfYaml::load($path.'.sample');
-    if (is_readable($path))
+    $opConfigCachePath = sfConfig::get('sf_cache_dir').DIRECTORY_SEPARATOR.'OpenPNE.yml.php';
+    if (is_readable($opConfigCachePath))
     {
-      $config = array_merge($config, sfYaml::load($path));
+      $config = (array)include($opConfigCachePath);
+    }
+    else
+    {
+      $path = OPENPNE3_CONFIG_DIR.'/OpenPNE.yml';
+      $config = sfYaml::load($path.'.sample');
+      if (is_readable($path))
+      {
+        $config = array_merge($config, sfYaml::load($path));
+      }
+
+      file_put_contents($opConfigCachePath, '<?php return '.var_export($config, true).';');
     }
 
     $this->configureSessionStorage($config['session_storage']['name'], (array)$config['session_storage']['options']);

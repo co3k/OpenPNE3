@@ -26,10 +26,10 @@ class GadgetTable extends opAccessControlDoctrineTable
     { 
       foreach ($configs[$typesName]['layout']['choices'] as $choice)
       { 
-        $types = array_merge($types, $layoutConfigs[$choice]);
+        $types += $layoutConfigs[$choice];
       } 
     } 
-    $types = array_merge($types, $layoutConfigs[$configs[$typesName]['layout']['default']]);
+    $types += $layoutConfigs[$configs[$typesName]['layout']['default']];
     $types = array_unique($types);
 
     if ($typesName !== 'gadget')

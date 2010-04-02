@@ -78,12 +78,15 @@ abstract class opDoctrineRecord extends sfDoctrineRecord implements Zend_Acl_Res
     return 'datetime' === $definition['type'];
   }
 
-  protected function _set($fieldName, $value, $load = true)
+  protected function _set($fieldName, $value, $load = true, $isDateTime = null)
   {
     // In setter, empty value must be handled as opDoctrineRecord::UNDEFINED_DATETIME
-    if ($this->checkIsDatetimeField($fieldName) && empty($value))
+    if ((null !== $isDateTime || $this->checkIsDatetimeField($fieldName)) && empty($value))
     {
-      $value = self::UNDEFINED_DATETIME;
+      if (false !== $isDateTime)
+      {
+        $value = self::UNDEFINED_DATETIME;
+      }
     }
 
     return parent::_set($fieldName, $value, $load);
@@ -110,14 +113,17 @@ abstract class opDoctrineRecord extends sfDoctrineRecord implements Zend_Acl_Res
     return parent::get($fieldName, $load);
   }
 
-  public function _get($fieldName, $load = true)
+  public function _get($fieldName, $load = true, $isDateTime = null)
   {
     $value = parent::_get($fieldName, $load);
 
     // In getter, opDoctrineRecord::UNDEFINED_DATETIME must be handled as null
-    if ($this->checkIsDatetimeField($fieldName) && in_array($value, array(self::UNDEFINED_DATETIME, self::UNDEFINED_DATETIME_BC), true))
+    if ((null !== $isDateTime || $this->checkIsDatetimeField($fieldName)) && in_array($value, array(self::UNDEFINED_DATETIME, self::UNDEFINED_DATETIME_BC), true))
     {
-      $value = null;
+      if (false !== $isDateTime)
+      {
+        $value = null;
+      }
     }
 
     return $value;
