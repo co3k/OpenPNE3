@@ -123,4 +123,18 @@ class opDoctrineQuery extends Doctrine_Query
   {
     $this->_conn = self::chooseConnection($this->shouldGoToMaster, $this->getType());
   }
+
+  public function execute($params = array(), $hydrationMode = null, $hydrationPolicy = null)
+  {
+    $result = parent::execute($params, $hydrationMode, $hydrationPolicy);
+
+    $connection = $this->getConnection();
+
+    if ($connection instanceof opDoctrineConnectionOpenPNE)
+    {
+      $connection->unsetDbh();
+    }
+
+    return $result;
+  }
 }

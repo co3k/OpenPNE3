@@ -70,6 +70,10 @@ member_invite:
   url: /invite
   param: { module: member, action: invite }
 
+member_search:
+  url: /member/search
+  param: { module: member, action: search }
+
 # friend rules
 friend_show_image:
   url: /friend/image
@@ -87,6 +91,10 @@ friend_manage:
 community_joinlist:
   url: /community/joinList
   param: { module: community, action: joinlist }
+
+community_search:
+  url: /community/search
+  param: { module: community, action: search }
 
 # openid rules
 openid_idpxrds:
