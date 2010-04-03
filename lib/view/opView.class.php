@@ -34,6 +34,16 @@ class opView extends sfPHPView
 
   protected $customizeComponents = array();
 
+  protected function initializeAttributeHolder($attributes = array())
+  {
+    $attributeHolder = new opViewParameterHolder($this->dispatcher, $attributes, array(
+      'escaping_method'   => sfConfig::get('sf_escaping_method'),
+      'escaping_strategy' => sfConfig::get('sf_escaping_strategy'),
+    ));
+
+    return $attributeHolder;
+  }
+
   /**
    * Sets the customize.
    *
