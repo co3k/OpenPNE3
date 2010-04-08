@@ -1,0 +1,6 @@
+- %SF_LIB_DIR%/filter/opExecutionFilter.class.php
+- %SF_LIB_DIR%/view/opView.class.php
+- %SF_LIB_DIR%/view/opViewParameterHolder.class.php
+- %SF_LIB_DIR%/util/opOutputEscaper.class.php
+- %SF_LIB_DIR%/request/opWebRequest.class.php
+- %SF_LIB_DIR%/i18n/opI18N.class.php
