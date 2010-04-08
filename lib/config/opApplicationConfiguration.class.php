@@ -18,6 +18,8 @@
 abstract class opApplicationConfiguration extends sfApplicationConfiguration
 {
   static protected $zendLoaded = false;
+  public $globEnablePluginList = array();
+  public $globEnablePluginControllerList = array();
 
   public function initialize()
   {
@@ -420,7 +422,41 @@ abstract class opApplicationConfiguration extends sfApplicationConfiguration
 
   public function globEnablePlugin($pattern, $isControllerPath = false)
   {
-    return $this->globPlugins($pattern, false, $isControllerPath);
+    if (!sfConfig::get('ebi_cache_glob_plugin', false))
+    {
+      return $this->globPlugins($pattern, false, $isControllerPath);
+    }
+
+    $cacheKey = md5(serialize($pattern));
+    $cacheHead = substr($cacheKey, 0, 2);
+
+    $cacheFile = '/tmp/'.substr($cacheKey, 0, 2).'_glob_enable_plugin_path.php';
+    $cacheProperty = 'globEnablePluginList';
+    if ($isControllerPath)
+    {
+      $cacheFile = '/tmp/'.substr($cacheKey, 0, 2).'_glob_enable_plugin_path_controller.php';
+      $cacheProperty = 'globEnablePluginControllerList';
+    }
+
+    $_prop =& $this->$cacheProperty;
+
+    if (empty($_prop[$cacheHead]))
+    {
+      if (is_readable($cacheFile))
+      {
+        $_prop[$cacheHead] = include $cacheFile;
+      }
+    }
+
+    if (isset($_prop[$cacheHead][$cacheKey]))
+    {
+      return $_prop[$cacheHead][$cacheKey];
+    }
+
+    $_prop[$cacheHead][$cacheKey] = $this->globPlugins($pattern, false, $isControllerPath);
+    file_put_contents($cacheFile, "<?php\nreturn ".var_export($_prop[$cacheHead], true).';');
+
+    return $_prop[$cacheHead][$cacheKey];
   }
 
   public function getGlobalTemplateDir($templateFile)
