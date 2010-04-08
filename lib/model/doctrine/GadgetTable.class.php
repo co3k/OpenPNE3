@@ -10,7 +10,10 @@
 
 class GadgetTable extends opAccessControlDoctrineTable
 {
-  protected $results;
+  protected
+    $results,
+    $gadgets = array(),
+    $gadgetConfigList = array();
 
   static protected function getTypes($typesName)
   { 
@@ -19,17 +22,17 @@ class GadgetTable extends opAccessControlDoctrineTable
     $layoutConfigs = sfConfig::get('op_gadget_layout_config', array());
 
     if (!isset($configs[$typesName]))
-    { 
+    {
       throw new Doctrine_Exception('Invalid types name');
-    } 
+    }
     if (isset($configs[$typesName]['layout']['choices']))
-    { 
+    {
       foreach ($configs[$typesName]['layout']['choices'] as $choice)
-      { 
-        $types = array_merge($types, $layoutConfigs[$choice]);
-      } 
-    } 
-    $types = array_merge($types, $layoutConfigs[$configs[$typesName]['layout']['default']]);
+      {
+        $types += $layoutConfigs[$choice];
+      }
+    }
+    $types += $layoutConfigs[$configs[$typesName]['layout']['default']];
     $types = array_unique($types);
 
     if ($typesName !== 'gadget')
@@ -45,12 +48,28 @@ class GadgetTable extends opAccessControlDoctrineTable
 
   public function retrieveGadgetsByTypesName($typesName)
   {
+    if (isset($this->gadgets[$typesName]))
+    {
+      return $this->gadgets[$typesName];
+    }
+
+    $file = sfconfig::get('sf_app_cache_dir').'/config/'.sfInflector::underscore($typesName)."_gadgets.php";
+    if (is_readable($file))
+    {
+      $results = include($file);
+      $this->gadgets[$typesName] = $results;
+      return $results;
+    }
+
     $types = $this->getTypes($typesName);
 
     foreach($types as $type)
     {
       $results[$type] = $this->retrieveByType($type);
     }
+
+    file_put_contents($file, "<?php return unserialize('".serialize($results)."');");
+    $this->gadgets[$typesName] = $results;
 
     return $results;
   }
@@ -69,7 +88,7 @@ class GadgetTable extends opAccessControlDoctrineTable
       ->where('type = ?', $type)
       ->orderBy('sort_order')
       ->execute();
-    
+
     $result = array();
 
     foreach ($_result as $value)
@@ -93,9 +112,22 @@ class GadgetTable extends opAccessControlDoctrineTable
     }
     return $this->results;
   }
-  
+
   public function getGadgetConfigListByType($type)
   {
+    if (isset($this->gadgetConfigList[$type]))
+    {
+      return $this->gadgetConfigList[$type];
+    }
+
+    $file = sfconfig::get('sf_app_cache_dir').'/config/'.sfinflector::underscore($type)."_gadgets_config_list.php";
+    if (is_readable($file))
+    {
+      $resultConfig = include($file);
+      $this->gadgetConfigList[$type] = $resultConfig;
+      return $resultConfig;
+    }
+
     $configs = sfConfig::get('op_gadget_config');
     foreach ($configs as $key => $config)
     {
@@ -108,10 +140,14 @@ class GadgetTable extends opAccessControlDoctrineTable
         }
         $configName .= '_list';
 
-        return sfConfig::get($configName, array());
+        $resultConfig = sfConfig::get($configName, array());
+        file_put_contents($file, "<?php return unserialize('".serialize($resultConfig)."');");
+        $this->gadgetConfigList[$type] = $resultConfig;
+        return $resultConfig;
       }
     }
 
+    $this->gadgetConfigList[$type] = array();
     return array();
   }
 
