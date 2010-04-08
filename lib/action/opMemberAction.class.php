@@ -328,7 +328,7 @@ abstract class opMemberAction extends sfActions
         $this->getUser()->setFlash('notice', $this->form->getCompleteMessage());
 
         $this->form->save($this->getUser()->getMemberId());
-        $this->redirect('member/config?category='.$this->categoryName);
+        $this->redirect('@member_config?category='.$this->categoryName);
       }
     }
 
