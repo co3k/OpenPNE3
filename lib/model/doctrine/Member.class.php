@@ -20,6 +20,14 @@ class Member extends BaseMember implements opAccessControlRecordInterface
     return Doctrine::getTable('MemberProfile')->getProfileListByMemberId($this->getId());
   }
 
+  public function hasProfiles()
+  {
+    return (bool)Doctrine::getTable('MemberProfile')
+      ->createQuery()
+      ->where('member_id = ?', $this->id)
+      ->count();
+  }
+
   public function getProfile($profileName)
   {
     $profile = Doctrine::getTable('MemberProfile')->retrieveByMemberIdAndProfileName($this->getId(), $profileName);
