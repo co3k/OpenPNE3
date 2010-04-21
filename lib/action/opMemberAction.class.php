@@ -110,7 +110,9 @@ abstract class opMemberAction extends sfActions
 
   public function executeRegister($request)
   {
-    $this->forward404Unless($this->getUser()->setRegisterToken($request['token']));
+    $member = $this->getUser()->setRegisterToken($request['token']);
+
+    $this->forward404Unless($member && $this->getUser()->isSNSMember());
   }
 
   public function executeRegisterInput($request)
@@ -118,9 +120,9 @@ abstract class opMemberAction extends sfActions
     $this->forward404Unless(opToolkit::isEnabledRegistration((sfConfig::get('app_is_mobile') ? 'mobile' : 'pc')));
 
     $this->token = $request['token'];
+    $member = $this->getUser()->setRegisterToken($this->token);
 
-    $this->forward404Unless($this->getUser()->setRegisterToken($this->token));
-    $this->forward404Unless($this->getUser()->isRegisterBegin());
+    $this->forward404Unless($member && $this->getUser()->isRegisterBegin());
 
     opActivateBehavior::disable();
     $this->form = $this->getUser()->getAuthAdapter()->getAuthRegisterForm();
