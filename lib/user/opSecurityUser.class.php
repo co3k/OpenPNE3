@@ -277,6 +277,13 @@ class opSecurityUser extends opAdaptableUser
     return ($this->getMember() && $this->getMember()->getIsActive());
   }
 
+  public function isInvited()
+  {
+    $member = $this->getMember(true);
+
+    return ($member && $member->getInviteMemberId());
+  }
+
   public function isRegisterBegin()
   {
     return $this->getAuthAdapter()->isRegisterBegin($this->getMemberId());
@@ -318,6 +325,12 @@ class opSecurityUser extends opAdaptableUser
 
     $this->setMemberId($member->getId());
 
-    return true;
+    $authMode = $member->getConfig('register_auth_mode');
+    if ($authMode)
+    {
+      $this->setCurrentAuthMode($authMode);
+    }
+
+    return $member;
   }
 }
