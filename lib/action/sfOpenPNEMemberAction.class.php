@@ -240,7 +240,7 @@ abstract class sfOpenPNEMemberAction extends sfActions
       {
         $this->memberForm->save();
         $this->profileForm->save($this->getUser()->getMemberId());
-        $this->redirect('member/profile');
+        $this->redirect('@member_profile');
       }
     }
 
@@ -289,7 +289,7 @@ abstract class sfOpenPNEMemberAction extends sfActions
           $token->delete();
         }
 
-        $this->redirect('member/home');
+        $this->redirect('@homepage');
       }
     }
 
@@ -323,7 +323,7 @@ abstract class sfOpenPNEMemberAction extends sfActions
         $this->getUser()->setFlash('notice', $this->form->getCompleteMessage());
 
         $this->form->save($this->getUser()->getMemberId());
-        $this->redirect('member/config?category='.$this->categoryName);
+        $this->redirect('@member_config?category='.$this->categoryName);
       }
     }
 

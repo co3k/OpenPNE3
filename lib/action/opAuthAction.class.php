@@ -46,6 +46,6 @@ class opAuthAction extends sfActions
       sfOpenPNEMailSend::sendTemplateMail('registerEnd', $member->getEmailAddress(), opConfig::get('admin_mail_address'), $params);
     }
 
-    $this->redirect('member/home');
+    $this->redirect('@homepage');
   }
 }
