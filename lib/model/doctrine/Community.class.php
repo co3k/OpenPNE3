@@ -69,14 +69,7 @@ class Community extends BaseCommunity implements opAccessControlRecordInterface
 
   public function getConfig($configName)
   {
-    $config = Doctrine::getTable('CommunityConfig')->retrieveByNameAndCommunityId($configName, $this->getId());
-
-    if (!$config)
-    {
-      return null;
-    }
-
-    return $config->value;
+    return Doctrine::getTable('CommunityConfig')->retrieveValueByNameAndCommunityId($configName, $this->getId());
   }
 
   public function getMembers($limit = null, $isRandom = false)
