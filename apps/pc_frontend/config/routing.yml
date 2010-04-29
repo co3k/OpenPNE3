@@ -12,6 +12,10 @@ obj_member_profile:
     id:        \d+
     sf_method: [get]
 
+member_profile_mine:
+  url:     /member/profile
+  param:   { module: member, action: profile }
+
 obj_friend_unlink:
   url:     /friend/unlink/:id
   class:   sfDoctrineRoute
