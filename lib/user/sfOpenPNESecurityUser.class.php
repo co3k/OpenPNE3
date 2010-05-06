@@ -172,8 +172,10 @@ class sfOpenPNESecurityUser extends sfBasicSecurityUser
     }
 
     $result = Doctrine::getTable('Member')->find($this->getMemberId());
-
-    $this->serializedMember = serialize($result);
+    if ($result)
+    {
+      $this->serializedMember = serialize($result);
+    }
 
     return $result;
   }
