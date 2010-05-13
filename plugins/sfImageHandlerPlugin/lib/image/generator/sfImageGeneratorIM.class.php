@@ -19,7 +19,21 @@ class sfImageGeneratorIM extends sfImageGeneratorImageTransform
 {
   protected function creaateTransform()
   {
-    return Image_Transform::factory('IM');
+    if (!defined('IMAGE_TRANSFORM_IM_PATH') && sfConfig::has('op_imagemagick_path'))
+    {
+      // follow 2.x format (for BC reason)
+      $path = dirname(sfConfig::get('op_imagemagick_path')).DIRECTORY_SEPARATOR;
+
+      define('IMAGE_TRANSFORM_IM_PATH', $path);
+    }
+
+    $result = Image_Transform::factory('IM');
+    if (PEAR::isError($result))
+    {
+      throw new RuntimeException($result->getMessage());
+    }
+
+    return $result;
   }
 
   protected function disableInterlace()
