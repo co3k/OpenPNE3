@@ -76,7 +76,7 @@ class opI18N extends sfI18N
       }
       else
       {
-        $this->messageSource = sfMessageSource::factory('Aggregate', array_map(array($this, 'createMessageSource'), $dirs));
+        $this->messageSource = sfMessageSource::factory('OpenPNECached', $cachedDir);
       }
     }
 
