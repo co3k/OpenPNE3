@@ -32,6 +32,8 @@ class opTesterHtmlEscape extends sfTester
   {
     $this->context = $this->browser->getContext();
     $this->response = $this->browser->getResponse();
+
+    $this->context->getConfiguration()->loadHelpers(array('Escaping', 'opUtil'));
   }
 
   protected function getRawTestData($model, $column)
@@ -44,18 +46,22 @@ class opTesterHtmlEscape extends sfTester
 
   protected function getEscapedTestData($model, $column)
   {
-    $this->context->getConfiguration()->loadHelpers('Escaping');
-
     return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
+  }
+
+  protected function countEscapedData($model, $column)
+  {
+    return substr_count($this->response->getContent(), $this->getEscapedTestData($model, $column));
+  }
+
+  protected function countRawData($model, $column)
+  {
+    return substr_count($this->response->getContent(), $this->getRawTestData($model, $column));
   }
 
   public function isAllEscapedData($model, $column)
   {
-    $isEscaped = (
-      !preg_match(self::PREG_DELIMITER.preg_quote($this->getRawTestData($model, $column), self::PREG_DELIMITER).self::PREG_DELIMITER, $this->response->getContent())
-      &&
-      preg_match(self::PREG_DELIMITER.preg_quote($this->getEscapedTestData($model, $column), self::PREG_DELIMITER).self::PREG_DELIMITER, $this->response->getContent())
-    );
+    $isEscaped = !$this->countRawData($model, $column) && $this->countEscapedData($model, $column);
 
     if ($isEscaped)
     {
@@ -71,11 +77,7 @@ class opTesterHtmlEscape extends sfTester
 
   public function isAllRawData($model, $column)
   {
-    $isRaw = (
-      preg_match(self::PREG_DELIMITER.preg_quote($this->getRawTestData($model, $column), self::PREG_DELIMITER).self::PREG_DELIMITER, $this->response->getContent())
-      &&
-      !preg_match(self::PREG_DELIMITER.preg_quote($this->getEscapedTestData($model, $column), self::PREG_DELIMITER).self::PREG_DELIMITER, $this->response->getContent())
-    );
+    $isEscaped = $this->countRawData($model, $column) && !$this->countEscapedData($model, $column);
 
     if ($isRaw)
     {
