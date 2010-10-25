@@ -12,11 +12,11 @@ Profile:
     sort_order: 1055
     Translation:
       ja_JP:
-        caption: "<&\"'>ESCAPING HTML TEST DATA FOR Profile.caption"
-        info:    "<&\"'>ESCAPING HTML TEST DATA FOR Profile.info"
+        caption: "<&\"'>Profile.caption ESCAPING HTML TEST DATA"
+        info:    "<&\"'>Profile.info ESCAPING HTML TEST DATA"
       en:
-        caption: "<&\"'>ESCAPING HTML TEST DATA FOR Profile.caption"
-        info:    "<&\"'>ESCAPING HTML TEST DATA FOR Profile.info"
+        caption: "<&\"'>Profile.caption ESCAPING HTML TEST DATA"
+        info:    "<&\"'>Profile.info ESCAPING HTML TEST DATA"
 
 ProfileOption:
   profile_option_html_1:
@@ -24,19 +24,19 @@ ProfileOption:
     Profile: profile_select_item
     Translation:
       ja_JP:
-        value: "<&\"'>ESCAPING HTML TEST DATA FOR ProfileOption.value"
+        value: "<&\"'>ProfileOption.value ESCAPING HTML TEST DATA"
       en:
-        value: "<&\"'>ESCAPING HTML TEST DATA FOR ProfileOption.value"
+        value: "<&\"'>ProfileOption.value ESCAPING HTML TEST DATA"
 
 Member:
   html_member_1:
     id: 1055 # it means "XSS (X-55)"
-    name: "<&\"'>ESCAPING HTML TEST DATA FOR Member.name"
+    name: "<&\"'>Member.name ESCAPING HTML TEST DATA"
     is_active: 1
 
 MemberProfile:
   html_member_1_profile_html_1:
-    value: "<&\"'>ESCAPING HTML TEST DATA FOR MemberProfile.value"
+    value: "<&\"'>MemberProfile.value ESCAPING HTML TEST DATA"
     public_flag: 1
     Member: html_member_1
     Profile: profile_html_1
@@ -62,11 +62,11 @@ MemberConfig:
 Community:
   html_community_1:
     id: 1055
-    name: "<&\"'>ESCAPING HTML TEST DATA FOR Community.name"
+    name: "<&\"'>Community.name ESCAPING HTML TEST DATA"
 
 CommunityCategory:
   html_community_category_1:
-    name: "<&\"'>ESCAPING HTML TEST DATA FOR CommunityCategory.name"
+    name: "<&\"'>CommunityCategory.name ESCAPING HTML TEST DATA"
     tree_key: 1
     is_allow_member_community: 1
     sort_order: 1055
@@ -75,8 +75,20 @@ CommunityConfig:
   html_community_description_1:
     Community: html_community_1
     name: "description"
-    value: "<&\"'>ESCAPING HTML TEST DATA FOR CommunityConfig.value"
+    value: "<&\"'>CommunityConfig.value ESCAPING HTML TEST DATA"
   html_community_1_register_policy:
     Community: html_community_1
     name: "register_policy"
     value: "open"
+
+CommunityMember:
+  html_community_1_first_member:
+    Community: html_community_1
+    Member: html_member_1
+
+CommunityMemberPosition:
+  html_community_1_admin:
+    Community: html_community_1
+    Member: html_member_1
+    CommunityMember: html_community_1_first_member
+    name: "admin"

@@ -21,7 +21,7 @@ class opTesterHtmlEscape extends sfTester
     $response,
     $context;
 
-  const TEST_DATA_TEMPLATE = '<&"\'>ESCAPING HTML TEST DATA FOR %model%.%column%';
+  const TEST_DATA_TEMPLATE = '<&"\'>%model%.%column% ESCAPING HTML TEST DATA';
   const PREG_DELIMITER = '/';
 
   public function prepare()
