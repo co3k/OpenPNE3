@@ -49,7 +49,7 @@ class opTesterHtmlEscape extends sfTester
     return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
   }
 
-  protected function countTestData($model, $column, $isEscaped)
+  protected function countTestData($model, $column, $isEscaped, $truncateOption = array())
   {
     if ($isEscaped)
     {
@@ -60,19 +60,33 @@ class opTesterHtmlEscape extends sfTester
       $string = $this->getRawTestData($model, $column);
     }
 
+    if ($truncateOption)
+    {
+      if (!is_array($truncateOption))
+      {
+        $truncateOption = array();
+      }
+
+      $width = isset($truncateOption['width']) ? $truncateOption['width'] : 80;
+      $etc = isset($truncateOption['etc']) ? $truncateOption['etc'] : '';
+      $rows = isset($truncateOption['rows']) ? $truncateOption['rows'] : 1;
+
+      $string = op_truncate($string, $width, $etc, $rows);
+    }
+
     return substr_count($this->response->getContent(), $string);
   }
 
-  public function countEscapedData($expected, $model, $column)
+  public function countEscapedData($expected, $model, $column, $truncateOption = array())
   {
-    $this->tester->is($this->countTestData($model, $column, true), $expected, sprintf('%d data of "%s"."%s" are escaped.', $expected, $model, $column));
+    $this->tester->is($this->countTestData($model, $column, true, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are escaped.', $expected, $model, $column));
 
     return $this->getObjectToReturn();
   }
 
-  public function countRawData($expected, $model, $column)
+  public function countRawData($expected, $model, $column, $truncateOption = array())
   {
-    $this->tester->is($this->countTestData($model, $column, false), $expected, sprintf('%d data of "%s"."%s" are raw.', $expected, $model, $column));
+    $this->tester->is($this->countTestData($model, $column, false, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are raw.', $expected, $model, $column));
 
     return $this->getObjectToReturn();
   }

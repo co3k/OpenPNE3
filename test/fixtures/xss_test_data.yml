@@ -58,3 +58,25 @@ MemberConfig:
     name: "password"
     value: <?php echo md5('password') . "\n"; ?>
     Member: html_member_1
+
+Community:
+  html_community_1:
+    id: 1055
+    name: "<&\"'>ESCAPING HTML TEST DATA FOR Community.name"
+
+CommunityCategory:
+  html_community_category_1:
+    name: "<&\"'>ESCAPING HTML TEST DATA FOR CommunityCategory.name"
+    tree_key: 1
+    is_allow_member_community: 1
+    sort_order: 1055
+
+CommunityConfig:
+  html_community_description_1:
+    Community: html_community_1
+    name: "description"
+    value: "<&\"'>ESCAPING HTML TEST DATA FOR CommunityConfig.value"
+  html_community_1_register_policy:
+    Community: html_community_1
+    name: "register_policy"
+    value: "open"
