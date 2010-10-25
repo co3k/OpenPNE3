@@ -49,19 +49,37 @@ class opTesterHtmlEscape extends sfTester
     return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
   }
 
-  protected function countEscapedData($model, $column)
+  protected function countTestData($model, $column, $isEscaped)
   {
-    return substr_count($this->response->getContent(), $this->getEscapedTestData($model, $column));
+    if ($isEscaped)
+    {
+      $string = $this->getEscapedTestData($model, $column);
+    }
+    else
+    {
+      $string = $this->getRawTestData($model, $column);
+    }
+
+    return substr_count($this->response->getContent(), $string);
   }
 
-  protected function countRawData($model, $column)
+  public function countEscapedData($expected, $model, $column)
   {
-    return substr_count($this->response->getContent(), $this->getRawTestData($model, $column));
+    $this->tester->is($this->countTestData($model, $column, true), $expected, sprintf('%d data of "%s"."%s" are escaped.', $expected, $model, $column));
+
+    return $this->getObjectToReturn();
+  }
+
+  public function countRawData($expected, $model, $column)
+  {
+    $this->tester->is($this->countTestData($model, $column, false), $expected, sprintf('%d data of "%s"."%s" are raw.', $expected, $model, $column));
+
+    return $this->getObjectToReturn();
   }
 
   public function isAllEscapedData($model, $column)
   {
-    $isEscaped = !$this->countRawData($model, $column) && $this->countEscapedData($model, $column);
+    $isEscaped = !$this->countTestData($model, $column, false) && $this->countTestData($model, $column, true);
 
     if ($isEscaped)
     {
@@ -77,7 +95,7 @@ class opTesterHtmlEscape extends sfTester
 
   public function isAllRawData($model, $column)
   {
-    $isEscaped = $this->countRawData($model, $column) && !$this->countEscapedData($model, $column);
+    $isRaw = $this->countTestData($model, $column, false) && !$this->countTestData($model, $column, true);
 
     if ($isRaw)
     {
