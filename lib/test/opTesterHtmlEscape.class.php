@@ -22,7 +22,6 @@ class opTesterHtmlEscape extends sfTester
     $context;
 
   const TEST_DATA_TEMPLATE = '<&"\'>%model%.%column% ESCAPING HTML TEST DATA';
-  const PREG_DELIMITER = '/';
 
   public function prepare()
   {
@@ -36,7 +35,7 @@ class opTesterHtmlEscape extends sfTester
     $this->context->getConfiguration()->loadHelpers(array('Escaping', 'opUtil'));
   }
 
-  protected function getRawTestData($model, $column)
+  public function getRawTestData($model, $column)
   {
     return strtr(self::TEST_DATA_TEMPLATE, array(
       '%model%'  => $model,
@@ -44,7 +43,7 @@ class opTesterHtmlEscape extends sfTester
     ));
   }
 
-  protected function getEscapedTestData($model, $column)
+  public function getEscapedTestData($model, $column)
   {
     return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
   }
