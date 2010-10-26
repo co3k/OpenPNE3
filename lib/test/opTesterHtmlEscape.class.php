@@ -45,7 +45,7 @@ class opTesterHtmlEscape extends sfTester
 
   static public function getEscapedTestData($namespace, $name)
   {
-    return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($namespace, $name));
+    return sfOutputEscaper::escape(ESC_SPECIALCHARS, self::getRawTestData($namespace, $name));
   }
 
   protected function countTestData($namespace, $name, $isEscaped, $truncateOption = array())
