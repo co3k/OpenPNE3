@@ -21,7 +21,7 @@ class opTesterHtmlEscape extends sfTester
     $response,
     $context;
 
-  const TEST_DATA_TEMPLATE = '<&"\'>%model%.%column% ESCAPING HTML TEST DATA';
+  const TEST_DATA_TEMPLATE = '<&"\'>%namespace%.%name% ESCAPING HTML TEST DATA';
 
   public function prepare()
   {
@@ -35,28 +35,28 @@ class opTesterHtmlEscape extends sfTester
     $this->context->getConfiguration()->loadHelpers(array('Escaping', 'opUtil'));
   }
 
-  static public function getRawTestData($model, $column)
+  static public function getRawTestData($namespace, $name)
   {
     return strtr(self::TEST_DATA_TEMPLATE, array(
-      '%model%'  => $model,
-      '%column%' => $column,
+      '%namespace%'  => $namespace,
+      '%name%'       => $name,
     ));
   }
 
-  static public function getEscapedTestData($model, $column)
+  static public function getEscapedTestData($namespace, $name)
   {
-    return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
+    return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($namespace, $name));
   }
 
-  protected function countTestData($model, $column, $isEscaped, $truncateOption = array())
+  protected function countTestData($namespace, $name, $isEscaped, $truncateOption = array())
   {
     if ($isEscaped)
     {
-      $string = $this->getEscapedTestData($model, $column);
+      $string = $this->getEscapedTestData($namespace, $name);
     }
     else
     {
-      $string = $this->getRawTestData($model, $column);
+      $string = $this->getRawTestData($namespace, $name);
     }
 
     if ($truncateOption)
@@ -76,47 +76,47 @@ class opTesterHtmlEscape extends sfTester
     return substr_count($this->response->getContent(), $string);
   }
 
-  public function countEscapedData($expected, $model, $column, $truncateOption = array())
+  public function countEscapedData($expected, $namespace, $name, $truncateOption = array())
   {
-    $this->tester->is($this->countTestData($model, $column, true, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are escaped.', $expected, $model, $column));
+    $this->tester->is($this->countTestData($namespace, $name, true, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are escaped.', $expected, $namespace, $name));
 
     return $this->getObjectToReturn();
   }
 
-  public function countRawData($expected, $model, $column, $truncateOption = array())
+  public function countRawData($expected, $namespace, $name, $truncateOption = array())
   {
-    $this->tester->is($this->countTestData($model, $column, false, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are raw.', $expected, $model, $column));
+    $this->tester->is($this->countTestData($namespace, $name, false, $truncateOption), $expected, sprintf('%d data of "%s"."%s" are raw.', $expected, $namespace, $name));
 
     return $this->getObjectToReturn();
   }
 
-  public function isAllEscapedData($model, $column)
+  public function isAllEscapedData($namespace, $name)
   {
-    $isEscaped = !$this->countTestData($model, $column, false) && $this->countTestData($model, $column, true);
+    $isEscaped = !$this->countTestData($namespace, $name, false) && $this->countTestData($namespace, $name, true);
 
     if ($isEscaped)
     {
-      $this->tester->pass(sprintf('all of value of "%s"."%s" are escaped.', $model, $column));
+      $this->tester->pass(sprintf('all of value of "%s"."%s" are escaped.', $namespace, $name));
     }
     else
     {
-      $this->tester->fail(sprintf('there is / are some raw value(s) of "%s"."%s".', $model, $column));
+      $this->tester->fail(sprintf('there is / are some raw value(s) of "%s"."%s".', $namespace, $name));
     }
 
     return $this->getObjectToReturn();
   }
 
-  public function isAllRawData($model, $column)
+  public function isAllRawData($namespace, $name)
   {
-    $isRaw = $this->countTestData($model, $column, false) && !$this->countTestData($model, $column, true);
+    $isRaw = $this->countTestData($namespace, $name, false) && !$this->countTestData($namespace, $name, true);
 
     if ($isRaw)
     {
-      $this->tester->pass(sprintf('all of value of "%s"."%s" are raw.', $model, $column));
+      $this->tester->pass(sprintf('all of value of "%s"."%s" are raw.', $namespace, $name));
     }
     else
     {
-      $this->tester->fail(sprintf('there is / are some escaped value(s) of "%s"."%s".', $model, $column));
+      $this->tester->fail(sprintf('there is / are some escaped value(s) of "%s"."%s".', $namespace, $name));
     }
 
     return $this->getObjectToReturn();
