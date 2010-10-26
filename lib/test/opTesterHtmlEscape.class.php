@@ -35,7 +35,7 @@ class opTesterHtmlEscape extends sfTester
     $this->context->getConfiguration()->loadHelpers(array('Escaping', 'opUtil'));
   }
 
-  public function getRawTestData($model, $column)
+  static public function getRawTestData($model, $column)
   {
     return strtr(self::TEST_DATA_TEMPLATE, array(
       '%model%'  => $model,
@@ -43,7 +43,7 @@ class opTesterHtmlEscape extends sfTester
     ));
   }
 
-  public function getEscapedTestData($model, $column)
+  static public function getEscapedTestData($model, $column)
   {
     return sfOutputEscaper::escape(ESC_SPECIALCHARS, $this->getRawTestData($model, $column));
   }
