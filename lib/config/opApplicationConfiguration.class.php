@@ -606,7 +606,7 @@ abstract class opApplicationConfiguration extends sfApplicationConfiguration
       $options['context']['prefix'] = $this->getAppScriptName($application, sfConfig::get('sf_environment'), $path, $isNoScriptName);
     }
 
-    $routing = new sfPatternRouting($context->getEventDispatcher(), null, $options);
+    $routing = new opPatternRouting($context->getEventDispatcher(), null, $options);
     $routing->setRoutes($config->evaluate($configuration->getConfigPaths('config/routing.yml')));
     $context->getEventDispatcher()->notify(new sfEvent($routing, 'routing.load_configuration'));
 

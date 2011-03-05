@@ -102,7 +102,7 @@ all:
           prefix:                    %SF_APP_DIR%
 
   routing:
-    class: sfPatternRouting
+    class: opPatternRouting
     param:
       generate_shortest_url:            true
       extra_parameters_as_query_string: true
