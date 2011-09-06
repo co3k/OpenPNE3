@@ -227,7 +227,7 @@ abstract class Doctrine_Hydrator_Graph extends Doctrine_Hydrator_Abstract
                                 if ( ! isset($element[$field])) {
                                     throw new Doctrine_Hydrator_Exception("Couldn't hydrate. Found a non-existent key named '$field'.");
                                 } else if (isset($prev[$parent][$relationAlias][$element[$field]])) {
-                                    throw new Doctrine_Hydrator_Exception("Couldn't hydrate. Found non-unique key mapping named '$field'.");
+//                                    throw new Doctrine_Hydrator_Exception("Couldn't hydrate. Found non-unique key mapping named '$field'.");
                                 }
                                 $prev[$parent][$relationAlias][$element[$field]] = $element;
                             } else {
