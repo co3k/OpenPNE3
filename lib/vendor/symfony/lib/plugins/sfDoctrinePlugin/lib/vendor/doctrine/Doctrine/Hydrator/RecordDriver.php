@@ -72,7 +72,7 @@ class Doctrine_Hydrator_RecordDriver extends Doctrine_Hydrator_Graph
         $component = $this->_getClassNameToReturn($data, $component);
 
         $this->_tables[$component]->setData($data);
-        $record = new opLoggableDoctrineRecordWrapper($this->_tables[$component]->getRecord());
+        $record = $this->_tables[$component]->getRecord();
 
         return $record;
     }

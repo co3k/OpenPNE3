@@ -19,6 +19,10 @@
  * <http://www.doctrine-project.org>.
  */
 
+if (!defined('DEBUG_BACKTRACE_IGNORE_ARGS')) {
+    define(DEBUG_BACKTRACE_IGNORE_ARGS, false);
+}
+
 /**
  * Doctrine_Record
  * All record classes should inherit this super class
@@ -197,6 +201,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      */
     private $_oid;
 
+    protected $traces, $readCount = 0, $writeCount = 0, $unknownMethodCount = 0;
+
     /**
      * constructor
      * @param Doctrine_Table|null $table       a Doctrine_Table object or null,
@@ -210,6 +216,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      */
     public function __construct($table = null, $isNewEntry = false)
     {
+        $this->traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
         if (isset($table) && $table instanceof Doctrine_Table) {
             $this->_table = $table;
             $exists = ( ! $isNewEntry);
@@ -1339,6 +1347,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
     protected function _get($fieldName, $load = true)
     {
+        $this->readCount++;
+
         $value = self::$_null;
 
         if (array_key_exists($fieldName, $this->_values)) {
@@ -1445,6 +1455,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
 
     protected function _set($fieldName, $value, $load = true)
     {
+        $this->writeCount++;
+
         if (array_key_exists($fieldName, $this->_values)) {
             $this->_values[$fieldName] = $value;
         } else if (array_key_exists($fieldName, $this->_data)) {
@@ -2623,6 +2635,8 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
      */
     public function __call($method, $args)
     {
+        $this->unknownMethodCount++;
+
         if (($template = $this->_table->getMethodOwner($method)) !== false) {
             $template->setInvoker($this);
             return call_user_func_array(array($template, $method), $args);
@@ -2696,5 +2710,37 @@ abstract class Doctrine_Record extends Doctrine_Record_Abstract implements Count
     public function __toString()
     {
         return (string) $this->_oid;
+    }
+
+    public function createTraceString($traces)
+    {
+        $traceString = '';
+        foreach ($traces as $trace) {
+            $traceString .= @$trace['file'].':'.@$trace['line'].PHP_EOL;
+        }
+
+        return $traceString;
+    }
+
+    public function getLogString($destructorTrace)
+    {
+        return sprintf('---------------------------------------'.PHP_EOL
+            .'[%s] (%s) uri: %s, Write:%d, Read:%d, Unknown: %d'.PHP_EOL
+            .'Constructor Trace: %s'.PHP_EOL
+            .'Destructor Trace: %s'.PHP_EOL, date('Y-m-d H:i:s'), get_class($this), $_SERVER['REQUEST_URI'], $this->writeCount, $this->readCount, $this->unknownMethodCount, $this->createTraceString($this->traces), $this->createTraceString($destructorTrace));
+    }
+
+    public function __destruct()
+    {
+        // NOTE: tune this testing
+        if ($this->writeCount) {
+            return null;
+        }
+
+        if (2 >= $this->readCount) {
+            $path = '/tmp/doctrine_access_log';
+            file_put_contents($path, $this->getLogString(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)), FILE_APPEND);
+            chmod($path, 0777);
+        }
     }
 }
