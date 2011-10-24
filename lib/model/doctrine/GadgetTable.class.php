@@ -172,7 +172,7 @@ class GadgetTable extends opAccessControlDoctrineTable
     if (empty($this->results))
     {
       $this->results = array();
-      $objects = $this->createQuery()->orderBy('sort_order')->execute();
+      $objects = $this->createQuery()->orderBy('sort_order')->execute(array(), 'mapper');
       foreach ($objects as $object)
       {
         $this->results[$object->type][] = $object;

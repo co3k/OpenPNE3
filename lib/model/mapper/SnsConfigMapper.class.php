@@ -1,29 +1,29 @@
 <?php
 
-/**
- * This file is part of the OpenPNE package.
- * (c) OpenPNE Project (http://www.openpne.jp/)
- *
- * For the full copyright and license information, please view the LICENSE
- * file and the NOTICE file that were distributed with this source code.
- */
-
-class SnsConfig extends BaseSnsConfig
+class SnsConfigMapper
 {
   protected static $snsConfigSettings = array();
 
-  public function construct()
+  public $name, $value;
+
+  public function __construct($data)
   {
+    $delimitor = '__';
+
+    foreach ($data as $key => $value)
+    {
+        $field = substr($key, strpos($key, $delimitor) + strlen($delimitor));
+        $this->$field = $value;
+    }
+
     if (!self::$snsConfigSettings) {
         self::$snsConfigSettings = sfConfig::get('openpne_sns_config');
     }
-
-    return parent::construct();
   }
 
   public function getConfig()
   {
-    $name = $this->getName();
+    $name = $this->name;
     if ($name && isset(self::$snsConfigSettings[$name]))
     {
       return self::$snsConfigSettings[$name];
@@ -34,7 +34,7 @@ class SnsConfig extends BaseSnsConfig
 
   public function getValue()
   {
-    $value = $this->_get('value');
+    $value = $this->value;
 
     if ($this->isMultipleSelect())
     {
@@ -42,16 +42,6 @@ class SnsConfig extends BaseSnsConfig
     }
 
     return $value;
-  }
-
-  public function setValue($value)
-  {
-    if ($this->isMultipleSelect())
-    {
-      $value = serialize($value);
-    }
-
-    $this->_set('value', $value);
   }
 
   protected function isMultipleSelect()

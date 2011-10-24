@@ -107,7 +107,7 @@ class SnsTermTable extends Doctrine_Table implements ArrayAccess
         $q->leftJoinTranslation('SnsTerm', $this->culture);
       }
 
-      foreach ($q->execute() as $term)
+      foreach ($q->execute(array(), 'mapper') as $term)
       {
         $this->terms[$term->name] = $term;
       }

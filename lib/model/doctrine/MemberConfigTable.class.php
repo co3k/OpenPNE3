@@ -69,7 +69,7 @@ class MemberConfigTable extends opAccessControlDoctrineTable
 
       if (!$queryCacheHash)
       {
-        $objects = $q->execute();
+        $objects = $q->execute(array(), 'mapper');
 
         $queryCacheHash = $q->calculateQueryCacheHash();
       }
@@ -77,7 +77,7 @@ class MemberConfigTable extends opAccessControlDoctrineTable
       {
         $q->setCachedQueryCacheHash($queryCacheHash);
 
-        $objects = $q->execute();
+        $objects = $q->execute(array(), 'mapper');
       }
 
       $this->results[$memberId] = array();

@@ -43,7 +43,8 @@ class SnsConfigTable extends Doctrine_Table
     {
       $this->configs = array();
 
-      foreach ($this->createQuery()->execute() as $config)
+      foreach ($this->createQuery()->execute(array(), 'mapper') as $config)
+//      foreach ($this->createQuery()->execute() as $config)
       {
         $this->configs[$config->name] = $config;
       }

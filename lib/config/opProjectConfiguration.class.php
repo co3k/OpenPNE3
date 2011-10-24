@@ -118,6 +118,8 @@ class opProjectConfiguration extends sfProjectConfiguration
     $manager->registerConnectionDriver('pgsql', 'Doctrine_Connection_Pgsql_ExtraFunctions');
     $manager->registerConnectionDriver('sqlite', 'Doctrine_Connection_Sqlite_ExtraFunctions');
 
+    $manager->registerHydrator('mapper', 'opDoctrineMapperHydrator');
+
     $this->setupProjectOpenPNEDoctrine($manager);
   }
 
