@@ -82,5 +82,48 @@ After
     Total Incl. PeakMemUse (bytes): 76,274,048 bytes
     Number of Function Calls:   160,740
 
+opAlbumPluginRouting 廃止
+-------------------------
 
+まあこいつら全部倒せばだいぶ違ってくるのかなーたぶんひとつだけ潰してもあまり意味ない。つーことで opAlbumPluginRouting もやっつける。
 
+パッチは https://gist.github.com/1311946
+
+After
+`````
+
+::
+
+    Total Incl. Wall Time (microsec):   2,266,486 microsecs
+    Total Incl. CPU (microsecs):    2,052,934 microsecs
+    Total Incl. MemUse (bytes): 75,547,496 bytes
+    Total Incl. PeakMemUse (bytes): 76,074,160 bytes
+    Number of Function Calls:   158,538
+
+opMessagePluginRouting 廃止
+---------------------------
+
+続けざまに。パッチは https://gist.github.com/1311972
+
+After
+`````
+
+::
+
+    Total Incl. Wall Time (microsec):   2,171,421 microsecs
+    Total Incl. CPU (microsecs):    2,041,800 microsecs
+    Total Incl. MemUse (bytes): 75,415,224 bytes
+    Total Incl. PeakMemUse (bytes): 76,041,904 bytes
+    Number of Function Calls:   157,314
+
+とりあえず廃止しきったけども
+----------------------------
+
+期待ほど減らなかったなーと思ったら array_merge() は減ったけど unserialize() が増えた。まあこれは当然の結果か。 array_merge() しなくなったぶんがそのまま減るわけじゃないものな。
+
+Excl. MemUse 順で見ていっても改善できそうなものはとりあえずなさそう（DQL 周りガッツリやったときのチューニングでまだ取り込んでないものとかがあればそのあたり改善できるかもしれないけどとりあえず置いておこう）。
+
+2011/10/25 - 2
+==============
+
+で、次は Incl. MemUse 順で見ていくことにするよ。
