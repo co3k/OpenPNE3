@@ -41,3 +41,46 @@ After
 
 * データの総量が少ない状態だとむしろ ORM 以外のところでガッツリメモリ食っている感じ
 
+
+2011/10/25 - 1
+==============
+
+ボトルネック調査しないでパフォーマンスチューニングとかヘソで茶がわくので今日は初心に返って調査しつつやる。
+
+factory 周り改善するアイディアはあるんだけどそれより後のコントローラ周りのコストのほうが大きい気がしてるんだよな。
+
+ルーティング
+------------
+
+さて。
+
+* opAlbumPluginRouting::listenToRoutingLoadConfigurationEvent()
+* opMessagePluginRouting::listenToRoutingLoadConfigurationEvent()
+* sfImageHandlerRouting::listenToRoutingLoadConfigurationEvent()
+
+でたぶん巨大な配列を array_merge() しててここでガッツリメモリ喰ってる（2MB くらい）と思われ。とりあえず sfImageHandlerRouting::listenToRoutingLoadConfigurationEvent() を廃止して様子見てみるか。
+
+Before
+``````
+
+::
+
+    Total Incl. Wall Time (microsec):   2,156,831 microsecs
+    Total Incl. CPU (microsecs):    2,065,553 microsecs
+    Total Incl. MemUse (bytes): 75,674,016 bytes
+    Total Incl. PeakMemUse (bytes): 76,301,080 bytes
+    Number of Function Calls:   161,068
+
+After
+`````
+
+::
+
+    Total Incl. Wall Time (microsec):   2,132,015 microsecs
+    Total Incl. CPU (microsecs):    2,058,108 microsecs
+    Total Incl. MemUse (bytes): 75,647,288 bytes
+    Total Incl. PeakMemUse (bytes): 76,274,048 bytes
+    Number of Function Calls:   160,740
+
+
+

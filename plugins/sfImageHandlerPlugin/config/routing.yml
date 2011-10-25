@@ -1,0 +1,9 @@
+image:
+  url: /cache/img/:format/:width_:height/:filename.:noice
+  param: { module: image, action: index, width: w, height: h }
+  requirements: { filename: '^[\w\d_\.\-]+$', format: '^(jpg|png|gif)$', width: '^w[0-9]*$', height: '^h[0-9]*$', noice: '^(jpg|png|gif)$' }
+  options: { segment_separators: ['_', '/', '.'], variable_regex: '[a-zA-Z0-9]+' }
+
+image_nodefaults:
+  url: /image/*
+  param: { module: default, action: error }
