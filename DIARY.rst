@@ -1,3 +1,5 @@
+※書き忘れたけどとりあえず分かりやすいところでホーム画面見てる。別のアクション選ぶのもなんか恣意的な感じになっちゃうかもだしね。
+
 2011/10/24 - 1
 ==============
 
@@ -169,3 +171,109 @@ opToolkit::getCultureChoices() が呼ばれる場面はここだけだが、 Ope
 おし！　3 MB 近く減った！　これは効果あったか。
 
 でもこの状態でも defaultComponents::executeLanguageSelecterBox() の Incl. MemUse が 1,341,592 なのが気になる。 sfForm あたりまで潜ってみるとオートロード周りが悪さをしているようなんだけれども、それはこのメソッドに限ったことではないはず。うーん……？
+
+opMemberComponents::executeBirthdayBox
+--------------------------------------
+
+Doctrine_Core::getTable() が 1,415,696 で MemberProfileTable::getViewableProfileByMemberIdAndProfileName() が 1,145,912 か。ほう。
+
+んー？　MemberProfileTable::getViewableProfileByMemberIdAndProfileName() は MemberProfile の単一レコード取ってきてるだけだよねえ。なんでこんなにメモリ喰う？
+
+これを昨日やったシンプルなオブジェクトにすげ替えればマシにはなるんだろうけど、まあちょっと地道なアプローチでやってみるよ。そもそもアレを完全に適用する前提ならコード生成とか必要になるし。
+
+ということで見たけど Doctrine::getTable() か……レコードオブジェクトのキャッシュがやっぱり無駄なんじゃないかな。もっとも MemberProfile とかのレコードが情報詰め込みすぎだったりするのかも知れないけど。
+
+んん？　class_exists() が 10,026,720 だって？　Doctrine_Table::initDefinition() で呼ばれているぶんで 10,026,720 で Doctrine_Connection::getTable() で 7,534,688 とな。これは……
+
+ためしに class_exists() のコールのコメントアウトを外すと、 sfAutoload::autoload() で同じくらいのメモリを消費する結果になった。
+
+うん、もう充分でしょう。 sfAutoload::autoload() が大きな問題と見てほとんど間違いない。コンポーネントの調査は中断してオートローディングの原因調査に入ろう。j
+
+2011/10/25 - 3
+==============
+
+オートローディング
+------------------
+
+さて。オートローダーは sfAutoload::loadClass() で 25,606,128 消費している。たとえばこのデータが APC とかに載っけられるとメモリ使用量が一気に下がるんだろうか。まあそれは今は置いておこう。
+
+ただこいつの中身を見てみると、
+
+* run_init::doctrine/SnsTerm.class.php 1,723,696
+* run_init::doctrine/SnsTermTable.class.php 1,018,904
+* run_init::util/opDoctrineConnectionMysql.class.php 880,264
+* load::OpenPNE2/KtaiEmoji.php 609,536
+* run_init::OpenPNE2/KtaiEmoji.php 591,608
+* run_init::lib/myUser.class.php 552,760
+* run_init::doctrine/MemberProfileTable.class.php 455,016
+
+ということなので、うーん（ああ load があるな。これは APC のキャッシュミスだな。容量少ないのかな）。
+
+しかし妙だなー。なんで doctrine/SnsTerm.class.php の run_init がこんなにメモリ喰うのか。特段巨大なファイルというわけでもないし、だいたいこのファイルの読み込み時点では SnsTerm はなんもやらないはずと思ってたけど。
+
+ためしに SnsTerm.class.php のクラスの実装を空に（ただ BaseSnsTerm を継承するだけに）にしてみてもなんもかわらない。どういうことなんだこれは。
+
+おっと sfAutoload::loadClass@1 は run_init::base/BaseSnsTerm.class.php に 1,606,600 かかってるな。さらに run_init::util/opDoctrineRecord.class.php に 1,421,752 かかり、 run_init::record/sfDoctrineRecord.class.php に 1,239,576 かかり……おっと Doctrine_Core::autoload に行き着くとは。このメソッドで Doctrine 関連の数々のファイルを一気にロードしている。そうか SnsTerm はリクエスト後初めて読み込まれるモデルファイルなんだな。
+
+load が多く出ているから APC がキャッシュし切れていないのも原因の一つかー。ちょっと容量引き上げてリトライしますわ。
+
+APC の設定値変更後
+------------------
+
+apc.shm_size をデフォルトの 32M から 128M に引き上げた。これで計測してみる::
+
+
+    Total Incl. Wall Time (microsec):   1,799,921 microsecs
+    Total Incl. CPU (microsecs):    1,727,108 microsecs
+    Total Incl. MemUse (bytes): 42,782,800 bytes
+    Total Incl. PeakMemUse (bytes): 42,907,152 bytes
+    Number of Function Calls:   157,185
+
+……あっちゃー。誠に申し訳ございませんでした……
+
+でも sfAutoload::loadClass() は 14,740,584 とか消費してる。これをどう見るか。 load は確かにほとんど見当たらないが、 run_init で結構喰ってる。これはファイル数多いから仕方がないのか。
+
+単純にファイル数を減らせばこれは改善するかな？　たとえば core_compile とかで。ちょっとやってみるか。まず Doctrine 関連だな。
+
+Doctrine のコンパイル
+---------------------
+
+Doctrine がコンパイラを提供しているのはマニュアルに書いてあるとおりでまあ常識なんですが、たぶんこいつを使うのが一番簡単。 symfony のコンパイラ使うのもいいけどねー。
+
+http://www.doctrine-project.org/projects/orm/1.2/docs/manual/improving-performance/en#compile
+
+やってみたけどうえー 42M から 45M に増えた。あ、 DBMS 指定していないからか？
+
+DBMS 指定したら 44M に。ちょっと待ってくださいよ−。
+
+オートロード時の初期化コスト自体は減っているし、気持ち速くなったような気がしないでもないが……::
+
+    Total Incl. Wall Time (microsec):   1,785,565 microsecs
+    Total Incl. CPU (microsecs):    1,681,760 microsecs
+    Total Incl. MemUse (bytes): 44,802,888 bytes
+    Total Incl. PeakMemUse (bytes): 44,930,992 bytes
+    Number of Function Calls:   155,626
+
+sfAutoload::loadClass のメモリ消費は 13,395,864 になった。まあここで Doctrine 関連の数々のファイル読み込みをやらなくなったわけだから減って当然と。
+
+ここで使わなかったクラスファイルを読み込むようになったから増えたってことだな。っておっと doctrine.compiled.php が APC に載ってない。増えるわけだ。ちなみに 4,327,960 とか消費してる。でかいなー
+
+これどうすればいいの？　ウェブサーバ再起動すればいい？
+
+再起動した。けどやっぱり doctrine.compiled.php が APC に載ってくれない。これは apc 確認用スクリプトの出番だな。どこにあったかな。
+
+http://svn.php.net/viewvc/pecl/apc/trunk/apc.php?view=markup
+
+ござった。システムキャッシュ見てみる。
+
+> doctrine.compiled.php    1   14520656    2011/10/25 20:55:38 2011/10/25 20:47:51 2011/10/25 20:55:34
+
+なんだよキャッシュしてるじゃーん。あれー？　アクセスのたびにヒット数も増えてるから読み込まれてるはず。よくわからんなー。
+
+うーん今日はここまでかな……ちょっとこのあたりのことは後々調べることにして、いまは先に進もう。
+
+次は以下をなんとかするところからはじめるってことで。
+
+* sfContext::dispatch 21,558,488
+* sfContext::createInstance 13,523,304
+* sfProjectConfiguration::getApplicationConfiguration 9,220,680
