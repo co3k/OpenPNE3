@@ -127,3 +127,45 @@ Excl. MemUse 順で見ていっても改善できそうなものはとりあえ�
 ==============
 
 で、次は Incl. MemUse 順で見ていくことにするよ。
+
+気になるのはやっぱりフィルタチェーンと factory とコンポーネントだ。というぐらいの見解は去年くらいに示したことあったなたしか思い出した。で、忙殺されてそのままと。
+
+まずコンポーネントのボトルネックを洗い出すぞと。 sfPartialView::render() と _call_component() がガッツリだなあ。 sfPartialView::render() はコンポーネントからきたデータでふくれあがってるんじゃないかと思うので、 _call_component() を見れば一目瞭然かな。なんか細かいところに入って行っちゃうな。まあいいか。でもデータほとんどない状態だけど。
+
+Incl. MemUse の 1MB 越えは以下。
+
+* defaultComponents::executeLanguageSelecterBox 4,513,856
+* opMemberComponents::executeBirthdayBox 2,623,696
+* applicationComponents::executeCautionAboutApplicationInvite 1,619,176
+* opMessagePluginMessageComponents::executeUnreadMessage 1,580,088
+* opCommunityComponents::executeCautionAboutChangeAdminRequest 1,043,432
+* opCommunityTopicPluginTopicComponents::executeTopicCommentListBox 1,013,080
+
+よし上から検証していくか。今日はこいつら検証したらこの作業終わりだな。
+
+defaultComponents::executeLanguageSelecterBox
+---------------------------------------------
+
+opLanguageSelecterForm のコンストラクタでめっさメモリ消費している。その主要因は opToolkit::getCultureChoices() で、こいつだけで 3MB 使ってる！　そうか sfCultureInfo は ICU のデータを読み込むから……
+
+opToolkit::getCultureChoices() が呼ばれる場面はここだけだが、 OpenPNE で sfCultureInfo を使う場面は意外とある。プロフィールの表示とか。だから opToolkit::getCultureChoices() をキャッシュだけしてお茶を濁すとかそういうことしてはいけない。
+
+つーか sfCultureInfo を永続的に持つ理由はどこにもないんだ。なんでこんな実装になってるんだ。頻繁に使う可能性があるからか。そうか。でもなー。まあこのクラスは symfony 由来じゃないし。しかも sfCultureInfo::getInstance() が返すインスタンスって関数内の static 変数に格納されてるのかこれ……
+
+普通に sfCultureInfo の実装がまずい気がしている。つーか国際化周りの実装は総じてひどいよね。 symfony 由来じゃない部分は特に分かりやすくひどいコードが多い。まあ 2005 年とかぐらいの前世紀のコードだからしょうがないかな。
+
+とりあえず sfCultureInfo 使っているところは大いに改善に余地ありということで、ひとまずここのコンポーネントでは（というか opToolkit::getCultureChoices() で）どう対処するか考えることにしよう。
+
+うん、つーか opToolkit::getCultureChoices() 呼ぶ必要ないね。 op_supported_languages が表示名を格納するようにしていれば解決じゃないのこれ。
+
+ということで適当に改善コードしこんでやってみた::
+
+    Total Incl. Wall Time (microsec):   2,103,188 microsecs
+    Total Incl. CPU (microsecs):    2,019,964 microsecs
+    Total Incl. MemUse (bytes): 72,243,960 bytes
+    Total Incl. PeakMemUse (bytes): 72,871,192 bytes
+    Number of Function Calls:   157,214
+
+おし！　3 MB 近く減った！　これは効果あったか。
+
+でもこの状態でも defaultComponents::executeLanguageSelecterBox() の Incl. MemUse が 1,341,592 なのが気になる。 sfForm あたりまで潜ってみるとオートロード周りが悪さをしているようなんだけれども、それはこのメソッドに限ったことではないはず。うーん……？

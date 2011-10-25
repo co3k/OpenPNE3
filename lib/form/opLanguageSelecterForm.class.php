@@ -14,8 +14,17 @@ class opLanguageSelecterForm extends BaseForm
 
     $languages = array_unique(array_merge($languages, $opt_languages));
 
-    $choices = opToolkit::getCultureChoices($languages);
-    
+    $choices = array();
+
+    foreach ($languages as $key => $value) {
+        if (ctype_digit((string)$key)) {
+            $_c = opToolkit::getCultureChoices(array($value));
+            $choices[$value] = array_shift($_c);
+        } else {
+            $choices[$key] = $value;
+        }
+    }
+
     $this->setDefaults(array(
       'culture' => $this->user->getCulture()
     ));

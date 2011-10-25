@@ -206,7 +206,7 @@ http_proxy: ""
 ####################################
 
 # 対応言語
-supported_languages: ['en', 'ja_JP']
+supported_languages: { 'en': 'English', 'ja_JP': '日本語 (日本)' }
 
 ####################################
 # プラグインチャンネルサーバ設定
