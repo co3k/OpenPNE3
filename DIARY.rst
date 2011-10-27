@@ -277,3 +277,38 @@ http://svn.php.net/viewvc/pecl/apc/trunk/apc.php?view=markup
 * sfContext::dispatch 21,558,488
 * sfContext::createInstance 13,523,304
 * sfProjectConfiguration::getApplicationConfiguration 9,220,680
+
+2011/10/27 - 1
+==============
+
+まず小川さんからもらった変更を適用してやってみるかな。おおなんかルーティング周り似たような変更しているじゃない。
+
+https://github.com/balibali/OpenPNE3/commit/242afba8475abf33572757c2b55597327704d97b
+
+で、紹介されたのがこれ。ルーティングキャッシュからの unserialize のコストを下げると。これは期待できる。
+
+小川前
+------
+
+::
+
+    Total Incl. Wall Time (microsec):   1,800,108 microsecs
+    Total Incl. CPU (microsecs):    1,691,822 microsecs
+    Total Incl. MemUse (bytes): 44,804,632 bytes
+    Total Incl. PeakMemUse (bytes): 44,932,688 bytes
+    Number of Function Calls:   155,627
+
+小川後
+------
+
+::
+
+    Total Incl. Wall Time (microsec):   1,774,001 microsecs
+    Total Incl. CPU (microsecs):    1,693,819 microsecs
+    Total Incl. MemUse (bytes): 41,138,368 bytes
+    Total Incl. PeakMemUse (bytes): 41,257,400 bytes
+    Number of Function Calls:   157,191
+
+おお 3MB 下がった（もっと下がるかなと思ったけどまあキャッシュのサイズ的にこんなものかな）
+
+unserialize() のメモリ使用量は 7,304,248 Bytes から 3,222,376 Bytes まで下がった。コール回数は 409 回から 241 回まで減少し、そのうち 118 回は opLazyUnserializeRoutes::offsetGet() から呼ばれている。メモリ消費量は 2,879,984 Bytes だった。このあたりもう少しなんとかならないかなー。ちょっと詳しく見てみる。
