@@ -47,8 +47,7 @@ class opLazyUnserializeRoutes extends ArrayIterator
 
     if (is_array($value))
     {
-      $value = unserialize($value[1]);
-
+      $value = new opLazyUnserializeRoute($value[1]);
       $value->setDefaultParameters(sfContext::getInstance()->getRouting()->getDefaultParameters());
 
       $this->offsetSet($offset, $value);

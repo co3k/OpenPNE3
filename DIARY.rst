@@ -312,3 +312,22 @@ https://github.com/balibali/OpenPNE3/commit/242afba8475abf33572757c2b55597327704
 おお 3MB 下がった（もっと下がるかなと思ったけどまあキャッシュのサイズ的にこんなものかな）
 
 unserialize() のメモリ使用量は 7,304,248 Bytes から 3,222,376 Bytes まで下がった。コール回数は 409 回から 241 回まで減少し、そのうち 118 回は opLazyUnserializeRoutes::offsetGet() から呼ばれている。メモリ消費量は 2,879,984 Bytes だった。このあたりもう少しなんとかならないかなー。ちょっと詳しく見てみる。
+
+2011/10/27 - 2
+==============
+
+opLazyUnserializeRoutes 読んだ。 unserialize() のコール機会自体を減らさないといけないということで理解。 sfPatternRouting::getRouteThatMatchesParameters() 内の foreach ループで多く呼ばれている。つまりルーティングルールの走査機会を減らすか速く終わるようにする必要がある。要するにデフォルトルールは悪だ。
+
+……と思ったがホーム画面ではデフォルトルールは使ってないということが明らかになった。うーんそうか……
+
+ということで反則っぽいかもしれないけど、つーかめっちゃ怖いけど、「明らかに違うルールは unserialize() せずに弾く」的なことをやってみることにした。とりあえず sfRoute の場合、最初に文字列比較を試してみる感じで::
+
+    Total Incl. Wall Time (microsec):   1,751,201 microsecs
+    Total Incl. CPU (microsecs):    1,683,343 microsecs
+    Total Incl. MemUse (bytes): 39,084,712 bytes
+    Total Incl. PeakMemUse (bytes): 39,203,880 bytes
+    Number of Function Calls:   156,602
+
+2MB 下がった。 ルーティング経由の unserialize() のコール回数は 25 回になった。メモリ使用量は 545,920 Bytes まで減った。
+
+よく見てみると opSecurityUser::getMember() 経由の unserialize() がめっちゃ呼ばれているんだけどこれはなんだ。
