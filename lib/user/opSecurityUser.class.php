@@ -20,7 +20,7 @@ class opSecurityUser extends opAdaptableUser
 {
   protected
     $authAdapters = array(),
-    $serializedMember = '';
+    $serializedMember = '', $member = null;
 
   /**
    * Initializes the current user.
@@ -39,7 +39,7 @@ class opSecurityUser extends opAdaptableUser
     parent::clearSessionData();
 
     // remove member cache
-    $this->serializedMember = '';
+    $this->member = null;
   }
 
   public function getMemberId($inactive = false)
@@ -79,9 +79,9 @@ class opSecurityUser extends opAdaptableUser
       return $member;
     }
 
-    if ($this->serializedMember)
+    if ($this->member)
     {
-      $member = unserialize($this->serializedMember);
+      return clone $this->member;
     }
     else
     {
@@ -94,7 +94,7 @@ class opSecurityUser extends opAdaptableUser
 
       if ($member->getIsActive())
       {
-        $this->serializedMember = serialize($member);
+        $this->member = $member;
       }
     }
 

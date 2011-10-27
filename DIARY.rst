@@ -331,3 +331,26 @@ opLazyUnserializeRoutes 読んだ。 unserialize() のコール機会自体を�
 2MB 下がった。 ルーティング経由の unserialize() のコール回数は 25 回になった。メモリ使用量は 545,920 Bytes まで減った。
 
 よく見てみると opSecurityUser::getMember() 経由の unserialize() がめっちゃ呼ばれているんだけどこれはなんだ。
+
+2011/10/27 - 3
+==============
+
+opSecurityUser::getMember() が unserialize() しまくっているのは、 opSecurityUser のインスタンスが Member のインスタンス自身じゃなく、このインスタンスを serialize() した結果を毎回 unserialize() して返すようにしているからだった。これはいかがなものかと思うなー。循環参照とか警戒したのかなー？　opSecurityUser::getMember() の結果が変なデータをくっつけたまま使い続けられるのを避けたのかな−？　opSecurityUser は最後のほうまで生き残るから Member のインスタンスを持ち続けることは無駄だと思ったのかな−？
+
+とりあえず一度取得した Member のインスタンスをそのまま返すようにした::
+
+    Total Incl. Wall Time (microsec):   1,667,594 microsecs
+    Total Incl. CPU (microsecs):    1,615,039 microsecs
+    Total Incl. MemUse (bytes): 39,175,152 bytes
+    Total Incl. PeakMemUse (bytes): 39,295,096 bytes
+    Number of Function Calls:   149,520
+
+そして Member のインスタンスの clone を返すようにもしてみた::
+
+    Total Incl. Wall Time (microsec):   1,627,865 microsecs
+    Total Incl. CPU (microsecs):    1,578,697 microsecs
+    Total Incl. MemUse (bytes): 38,986,496 bytes
+    Total Incl. PeakMemUse (bytes): 39,105,720 bytes
+    Number of Function Calls:   149,520
+
+おー。そうか、じゃあ unserialize() するようにした意図自体は正しかったわけだな。だが、その方法として unserialize() を選択したことが誤りだったと。
