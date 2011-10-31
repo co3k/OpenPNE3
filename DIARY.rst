@@ -354,3 +354,28 @@ opSecurityUser::getMember() が unserialize() しまくっているのは、 opS
     Number of Function Calls:   149,520
 
 おー。そうか、じゃあ unserialize() するようにした意図自体は正しかったわけだな。だが、その方法として unserialize() を選択したことが誤りだったと。
+
+2011/10/31 - 1
+==============
+
+前回の恐ろしいやつにバグがあってキャッシュとかまっさらなときに動かなくなってたので直した。この状態での結果は以下::
+
+    Total Incl. Wall Time (microsec):   2,223,929 microsecs
+    Total Incl. CPU (microsecs):    1,634,598 microsecs
+    Total Incl. MemUse (bytes): 40,804,208 bytes
+    Total Incl. PeakMemUse (bytes): 40,922,728 bytes
+    Number of Function Calls:   150,781
+
+おかしいな増えてる。なんでだ。バグのせいということにしようか。まあ APC のキャッシュ具合とかにある程度左右されるのかもな。あまり気にしないでおく。とにかくこれが今日の基準ということで。
+
+で、そういや opWebAPIPlugin 関連のルーティングルールが pc_frontend なのに大量に登録されているのが気になるので削ってみる::
+
+    $ mv plugins/opWebAPIPlugin/config/ plugins/opWebAPIPlugin/apps/api
+
+この結果は以下::
+
+    Total Incl. Wall Time (microsec):   1,675,099 microsecs
+    Total Incl. CPU (microsecs):    1,618,225 microsecs
+    Total Incl. MemUse (bytes): 39,443,112 bytes
+    Total Incl. PeakMemUse (bytes): 39,561,848 bytes
+    Number of Function Calls:   148,778

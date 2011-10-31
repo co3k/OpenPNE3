@@ -2,7 +2,7 @@
 
 class opLazyUnserializeRoute
 {
-  protected $serialized, $unserialized, $parameters;
+  public $serialized, $unserialized, $parameters;
 
   public function __construct($serialized)
   {
@@ -16,6 +16,10 @@ class opLazyUnserializeRoute
 
   public function matchesParameters($params, $context = array())
   {
+    if ($this->hasUnserialized()) {
+        return $this->unserialize()->matchesParameters($params, $context);
+    }
+
     if (!isset($params['action']) || !isset($params['module']))
     {
         return $this->unserialize()->matchesParameters($params, $context);
@@ -44,6 +48,10 @@ class opLazyUnserializeRoute
       {
         return $this->unserialize()->matchesParameters($params, $context);
       }
+    }
+    else
+    {
+      return $this->unserialize()->matchesParameters($params, $context);
     }
 
     return false;
@@ -74,5 +82,10 @@ class opLazyUnserializeRoute
     }
 
     return $this->unserialized;
+  }
+
+  public function hasUnserialized()
+  {
+    return (bool)$this->unserialized;
   }
 }
