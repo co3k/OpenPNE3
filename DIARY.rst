@@ -438,3 +438,72 @@ OpenPNE はほとんどのリクエストでデータベースを使用するた
 
 これで計測すると、 Total Incl. MemUse (bytes): 39,441,376 bytes -> 39,420,616 bytes というなんとも雀の涙程度だが改善された。毎回読み込まれるファイルなのであれば、 core_compile の対象にすればするほど効果があると思うので、もうちょっと追加できるファイルがないか考えてみたい。
 
+2011/11/01 - 2
+==============
+
+次に検討するべきは
+
+> 2. 無駄なスクリプトの読み込みが発生していないかどうか？
+
+これ。
+
+まず core_compile の中身から点検する::
+
+    $ grep "^\(abstract \|\)class" cache/_www/pc_frontend/prod/config/config_core_compile.yml.php
+    class sfAutoload
+    abstract class sfComponent
+    abstract class sfAction extends sfComponent
+    abstract class sfActions extends sfAction
+    class sfActionStack
+    class sfActionStackEntry
+    abstract class sfController
+    class sfDatabaseManager
+    abstract class sfFilter
+    class sfExecutionFilter extends sfFilter
+    class sfRenderingFilter extends sfFilter
+    class sfFilterChain
+    abstract class sfLogger
+    class sfNoLogger extends sfLogger
+    abstract class sfRequest implements ArrayAccess
+    abstract class sfResponse implements Serializable
+    abstract class sfRouting
+    abstract class sfStorage
+    class sfUser implements ArrayAccess
+    class sfNamespacedParameterHolder extends sfParameterHolder
+    abstract class sfView
+    class sfViewParameterHolder extends sfParameterHolder
+    abstract class sfWebController extends sfController
+    class sfFrontWebController extends sfWebController
+    class sfWebRequest extends sfRequest
+    class sfPatternRouting extends sfRouting
+    class sfWebResponse extends sfResponse
+    class sfSessionStorage extends sfStorage
+    class sfPHPView extends sfView
+    class sfOutputEscaperSafe extends ArrayIterator
+    class sfDoctrineDatabase extends sfDatabase
+    class opView extends sfPHPView
+    class opWebRequest extends sfWebRequest
+    class opI18N extends sfI18N
+
+おっと、これは逆に少なすぎないか？　symfony のすべてのプロジェクトで使われるファイルっていうとこんなものか。これは OpenPNE における各クラスの使用状況にあわせてもっと改善できると思う。無駄なファイルは特に見当たらなかった。
+
+次に Doctrine_Compiler の実装を見てみる。
+
+ってうおおおおおおおおおいおいおいおいおいちょっと待てちょっと待て、 Doctrine の全ファイル読み込んでるのかこれ。いやいやいやいやそれはダメだわ。
+
+これは……自分でよく使う Doctrine のクラスファイル群を列挙して core_compile.yml で定義するようにした方がいいな。
+
+Doctrine 以外のファイルも含めて、どのクラスファイルがよく読み込まれうるかの統計を取りたい。どうすればいいのかな。リクエスト終了時に定義済みクラスの一覧を書き出せばいいんだろうか？　やってみるか。
+
+ということでそのリクエストにおける定義済みクラスの一覧を /tmp/kani.classes に出力するようにして、 50 リクエストほど適当にブラウジングして、 cat /tmp/kani.classes | sort | uniq -c | sort -n -r して出現回数を調べてみた（Doctrine のコンパイル済みファイルは読み込まないようにした）。結果は DEFINED_CLASSES_COUNT.201101 に置いておく。
+
+これを基に core_compile.yml の中身を決めていきたいところだが、とりあえず所感としては、
+
+* なんか OpenID 系（Yadis も）のライブラリが毎回読み込まれているがこれは無駄じゃないか
+* OpenPNE_KtaiEmoji 系のライブラリが毎回読み込まれているがこれは無駄じゃないか。しかもこのライブラリはサイズがデカイ
+* Net_UserAgent_Mobile を pc_frontend で読み込む意味はないんじゃないか
+* Net_IPv4 を pc_frontend で読み込む意味はないんじゃないか
+* 使用していない Swift 系のライブラリが読み込まれているのは無駄
+* PEAR を毎回読み込んでいるが、本当に必要なのかどうか疑わしい
+
+というところがあるので、ちょっとまずこのあたりの見直しをやっていきたいところ。
