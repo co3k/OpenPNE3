@@ -1,0 +1,6 @@
+#- %SF_LIB_DIR%/util/opDoctrineQuery.class.php
+- %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/database/sfDoctrineDatabase.class.php
+#- %SF_LIB_DIR%/request/opWebRequest.class.php
+- %SF_LIB_DIR%/view/opView.class.php
+- %SF_LIB_DIR%/request/opWebRequest.class.php
+- %SF_LIB_DIR%/i18n/opI18N.class.php

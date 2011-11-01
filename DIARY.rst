@@ -379,3 +379,62 @@ opSecurityUser::getMember() が unserialize() しまくっているのは、 opS
     Total Incl. MemUse (bytes): 39,443,112 bytes
     Total Incl. PeakMemUse (bytes): 39,561,848 bytes
     Number of Function Calls:   148,778
+
+2011/10/31 - 2
+==============
+
+さてコンポーネントなんとか軽くできないかなー。と思って調べたけれどもコンポーネントでメモリガッツリ食っているのは Doctrine のレコード取得周りっぽい。
+
+いちいち多方面のレコードをキャッシュしているのが悪いのかなと思ってそのあたりいろいろいじったけれども予想に反して改善されない。主原因はレコードオブジェクトではないのかそれとも……
+
+他で特にかかっているのは Doctrine のコンパイル済みクラスファイルのロードと、コンフィグハンドラの登録におけるオートローディングとコンパイル済み symfony クラスファイルのロードだった。うーんうーん……
+
+2011/11/01 - 1
+==============
+
+詰まったので日を改めてみた。ついでに月も改まった。とりあえず直近の目標は、
+
+* コンポーネント等で大量にメモリを消費している Doctrine のレコード取得周りの原因を探る
+* オートローディング周りで大量にメモリを消費しているのでその原因を探る
+
+といったところかなー。とりあえず前者は置いておいて後者を今日見てみることにする。
+
+sfAutoload::loadClass() で 13,416,864 bytes も喰っているけれど、これは割とどうしようもないかも。 Doctrine のモデルクラスは定義が複雑なので、クラスの読み込みだけで相当なインパクトがある。で、ホーム画面は様々な種類のモデルファイルを読み込む必要があるから、必要なクラスファイルを読み込むだけで相当なダメージがある。これを解決するにはモデルの定義を限りなくシンプルにする（クラスファイルを読み込んでも大してパフォーマンスに影響が出ない程度のシンプルな定義にする）しかなく、たとえば Doctrine 2 のアプローチがかなり有効に効くはずと思う。
+
+以前の「シンプルなオブジェクトにモデルをすげ替える」の効果が薄かったのは、 Doctrine_Table は指定されたレコードクラスのインスタンスを必要としてしまうから。 Gadget の例で行くと、シンプルなオブジェクトと比較したクラス読み込みにかかるコストの差は 178,680 - 1,120 = 177,560 bytes であり、レコードクラスのインスタンスをまったく読み込まない想定であればかなりパフォーマンスが減ることが期待できる。現状でも「シンプルなオブジェクトにモデルをすげ替える」を一部適用して 2MB ものメモリ使用量の増加が見られたため、あわせてレコードクラスのインスタンスを基本的に読み込まないようにコーディングできれば、大幅なパフォーマンスの改善が見込めるはず。本気でチャレンジしてみる？
+
+さて、あとはコンパイル済みスクリプトの読み込みにも注目したい。以下の二点がポイントになると思う。
+
+1. コンパイルすべきファイルが他にないかどうか？
+2. 無駄なスクリプトの読み込みが発生していないかどうか？
+
+まず一点目について検討したい。これを検討するには sfAutoload::loadClass() のコストを見るのが一番いいように思える。
+
+sfAutoload::loadClass() が読み込むクラスファイルのうち、 Doctrine のレコードクラスおよびテーブルクラスを除外すると、以下のようなクラスファイルが読みこまれているのがわかる。
+
+* load::util/opDoctrineQuery.class.php 107,448
+* load::request/opWebRequest.class.php 67,704
+* load::config/sfOpenPNEApplicationConfiguration.class.php 51,472
+* load::database/sfDoctrineDatabase.class.php 43,136
+* load::action/opMemberAction.class.php 40,632
+* load::behavior/opCommunityTopicPluginImagesRecordGenerator.class.php 36,800
+* load::routing/opDynamicAclRoute.class.php 35,360
+* load::view/opView.class.php 33,776
+* load::response/opWebResponse.class.php 32,632
+* load::behavior/opCommunityTopicPluginImagesBehavior.class.php 31,808
+* load::routing/opLazyUnserializeRoute.class.php 31,752
+* load::behavior/opActivateBehavior.class.php 31,328
+* load::lib/opMessagePluginObserver.class.php 29,752
+* load::behavior/opActivityCascadingBehavior.class.php 28,544
+* load::i18n/opI18N.class.php 26,656
+* load::util/opDoctrineConnectionMysql.class.php 23,128
+* load::routing/opPatternRouting.class.php 23,024
+* load::lib/opAuthAdapterOpenID.class.php 20,224
+* load::action/opDiaryPluginDiaryComponents.class.php 19,624
+
+OpenPNE はほとんどのリクエストでデータベースを使用するため、たとえば opDoctrineQuery や sfDoctrineDatabase は常に読み込んでしまってもいいように思える。また、 opWebRequest, opView, opWebRequest, opI18N もタスクでない限りは使用するため、これらも常に読み込んで構わない。これらのクラスを core_compile の対象にし、どの程度パフォーマンスが改善しうるか観察してみることにする。
+
+おっと、 opDoctrineQuery と opWebRequest でエラーになったのでこいつらはとりあえず対象から外すことにする。
+
+これで計測すると、 Total Incl. MemUse (bytes): 39,441,376 bytes -> 39,420,616 bytes というなんとも雀の涙程度だが改善された。毎回読み込まれるファイルなのであれば、 core_compile の対象にすればするほど効果があると思うので、もうちょっと追加できるファイルがないか考えてみたい。
+
