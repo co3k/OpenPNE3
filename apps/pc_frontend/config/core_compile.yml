@@ -1,3 +1,26 @@
+# Symfony
+- %SF_SYMFONY_LIB_DIR%/view/sfViewCacheManager.class.php
+- %SF_SYMFONY_LIB_DIR%/routing/sfRoute.class.php
+- %SF_SYMFONY_LIB_DIR%/view/sfPartialView.class.php
+- %SF_SYMFONY_LIB_DIR%/escaper/sfOutputEscaper.class.php
+- %SF_SYMFONY_LIB_DIR%/escaper/sfOutputEscaperArrayDecorator.class.php
+- %SF_SYMFONY_LIB_DIR%/escaper/sfOutputEscaperGetterDecorator.class.php
+- %SF_SYMFONY_LIB_DIR%/escaper/sfOutputEscaperObjectDecorator.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfIMessageSource.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfMessageSource.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfMessageSource_File.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfMessageSource_XLIFF.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfMessageFormat.class.php
+- %SF_SYMFONY_LIB_DIR%/vendor/swiftmailer/classes/Swift/Mailer.php
+- %SF_SYMFONY_LIB_DIR%/mailer/sfMailer.class.php
+- %SF_SYMFONY_LIB_DIR%/util/sfInflector.class.php
+- %SF_SYMFONY_LIB_DIR%/i18n/sfI18N.class.php
+- %SF_SYMFONY_LIB_DIR%/database/sfDatabase.class.php
+- %SF_SYMFONY_LIB_DIR%/action/sfComponents.class.php
+- %SF_SYMFONY_LIB_DIR%/util/sfCallable.class.php
+- %SF_SYMFONY_LIB_DIR%/user/sfSecurityUser.class.php
+- %SF_SYMFONY_LIB_DIR%/user/sfBasicSecurityUser.class.php
+
 # Doctrine
 # - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine.php # failed in require_once "Doctrine/Core"
 # - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Core.php # can't define it without Doctrine.php
@@ -86,3 +109,53 @@
 - %SF_LIB_DIR%/view/opView.class.php
 - %SF_LIB_DIR%/request/opWebRequest.class.php
 - %SF_LIB_DIR%/i18n/opI18N.class.php
+- %SF_LIB_DIR%/i18n/sfMessageSource_OpenPNECached.class.php
+- %SF_LIB_DIR%/i18n/sfMessageSource_OpenPNE.class.php
+- %SF_LIB_DIR%/user/opBaseSecurityUser.class.php
+- %SF_LIB_DIR%/user/opAdaptableUser.class.php
+- %SF_LIB_DIR%/user/opSecurityUser.class.php
+- %SF_LIB_DIR%/user/opAuthAdapter.class.php
+- %SF_LIB_DIR%/routing/opPatternRouting.class.php
+- %SF_LIB_DIR%/routing/opLazyUnserializeRoutes.class.php
+- %SF_LIB_DIR%/routing/opLazyUnserializeRoute.class.php
+- %SF_LIB_DIR%/controller/opFrontWebController.class.php
+- %SF_LIB_DIR%/filter/opExecutionFilter.class.php
+- %SF_LIB_DIR%/filter/opEmojiFilter.class.php
+- %SF_LIB_DIR%/filter/opCheckEnabledApplicationFilter.class.php
+- %SF_LIB_DIR%/filter/opCacheControlFilter.class.php
+- %SF_LIB_DIR%/filter/opAppendXRDSHeaderFilter.class.php
+- %SF_LIB_DIR%/config/opConfig.class.php
+- %SF_LIB_DIR%/config/opColorConfig.class.php
+- %SF_LIB_DIR%/behavior/opActivateListener.class.php
+- %SF_LIB_DIR%/behavior/opActivateBehavior.class.php
+
+# most loaded tables
+- %SF_LIB_DIR%/model/doctrine/MemberTable.class.php
+- %SF_LIB_DIR%/model/doctrine/MemberConfigTable.class.php
+- %SF_LIB_DIR%/model/doctrine/GadgetTable.class.php
+- %SF_LIB_DIR%/model/doctrine/BannerUseImageTable.class.php
+- %SF_LIB_DIR%/model/doctrine/BannerTable.class.php
+- %SF_LIB_DIR%/model/doctrine/SnsTermTable.class.php
+- %SF_LIB_DIR%/model/doctrine/SnsConfigTable.class.php
+
+# most loaded models
+# (the followings need to load opDoctrineRecord)
+#- MemberConfig
+#- Member
+#- Gadget
+#- BaseSnsTerm
+#- BaseSnsConfig
+#- BaseMemberConfig
+#- BaseMember
+#- BaseGadget
+#- BaseBannerUseImage
+#- BaseBanner
+#- BannerUseImage
+#- BannerTranslation
+#- Banner
+#- SnsTermTranslation
+#- SnsTerm
+#- SnsConfig
+
+# pc_frontend
+- %SF_LIB_DIR%/controller/opPcFrontWebController.class.php
