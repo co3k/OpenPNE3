@@ -49,11 +49,6 @@ class opProjectConfiguration extends sfProjectConfiguration
     $this->dispatcher->connect('command.pre_command', array(__CLASS__, 'listenToPreCommandEvent'));
     $this->dispatcher->connect('doctrine.filter_cli_config', array(__CLASS__, 'filterDoctrineCliConfig'));
 
-    if ($this instanceof sfApplicationConfiguration && !$this->isDebug())
-    {
-      $this->loadCompiledDoctrine();
-    }
-
     $this->setupProjectOpenPNE();
   }
 
@@ -126,15 +121,6 @@ class opProjectConfiguration extends sfProjectConfiguration
     $manager->registerHydrator('mapper', 'opDoctrineMapperHydrator');
 
     $this->setupProjectOpenPNEDoctrine($manager);
-
-    if ($this instanceof sfApplicationConfiguration && !$this->isDebug())
-    {
-      $path = $this->getCompiledDoctrinePath();
-      if (!is_file($path))
-      {
-        Doctrine_Core::compile($path, 'mysql');
-      }
-    }
   }
 
   protected function setOpenPNEConfiguration()
@@ -174,22 +160,5 @@ class opProjectConfiguration extends sfProjectConfiguration
     $config['migrations_path'] = sfConfig::get('sf_data_dir').'/migrations/generated';
 
     return $config;
-  }
-
-  protected function loadCompiledDoctrine()
-  {
-    $path = $this->getCompiledDoctrinePath();
-    if (is_file($path))
-    {
-      require_once $path;
-    }
-  }
-
-  protected function getCompiledDoctrinePath()
-  {
-    $cacheDir = sfConfig::get('sf_cache_dir');
-    $path = sfConfig::get('sf_cache_dir').'/doctrine.compiled.php';
-
-    return $path;
   }
 }

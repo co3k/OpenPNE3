@@ -567,9 +567,9 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
 
 どうも opEmojiFilter で OpenPNE_KtaiEmoji::convertEmoji() がロードされるっぽい。で、 opEmojiFilter は毎回読み込まれると。別にここは特に間違っちゃいない。しかし変換対象となる文字がないにもかかわらずあのような巨大なファイルが読み込まれるのは問題。
 
-うわ、というか OpenPNE_KtaiEmoji そのものがデカイ。ちょっと勘弁してよー。このコードはないわ。よく 2 系の時に問題にならなかったな。いや問題と考えるような人がいなかったんだな俺を含め。
+うわ、というか OpenPNE_KtaiEmoji そのものがデカイ。ちょっと勘弁してよー。このコードはないわ。
 
-とりあえずの方針としては以下。丸ごとコードを書き換えたいところが俺はそういう愚かなことをしない主義だ (Joel on Software - Things You Should Never Do, Part I : http://www.joelonsoftware.com/articles/fog0000000069.html を金科玉条にしている。で OpenPNE3 のときに甘言にのせられてこれを破ってひどい目に遭ったと)。
+とりあえずの方針としては以下。丸ごとコードを書き換えたいところだが俺はそういう愚かなことをしない主義だ (Joel on Software - Things You Should Never Do, Part I : http://www.joelonsoftware.com/articles/fog0000000069.html を金科玉条にしている。で OpenPNE3 のときに甘言にのせられてこれを破ってひどい目に遭ったと)。
 
 1. OpenPNE_KtaiEmoji で持っている変換リストを外に出す
 2. 変換リストを OpenPNE_KtaiEmoji のコンストラクタ時点で構築しない。なぜなら OpenPNE_KtaiEmoji はシングルトンで、しかも OpenPNE_KtaiEmoji::getInstance() の static 変数にインスタンスが格納されるため、リクエストの終わりまでこの巨大なリストを保持したままインスタンスが残り続けると思われ
@@ -615,3 +615,45 @@ opWebRequest::isMobile() がこれらのライブラリを使うのは間違い�
 うう……なんか地道だ。でもそんなもんだよねー。
 
 と思ったら Net_UserAgent_Mobile はまだ読み込まれてらっしゃった。おっとしかも web/prof.php か。うーん……これはしょうがないかな。とりあえず諦めて次に行くか。
+
+しかし Net_UserAgent_Mobile を読み込んでいる限り PEAR も読み込まれるので、うーんなんだかなあ。
+
+2011/11/02 - 4
+==============
+
+そしていよいよ Swift だ。こいつをどうしてくれようか。こいつはデフォルトで sfFactoryConfigHandler によってはき出されるキャッシュファイルによって読み込まれるので、 sfFactoryConfigHandler の挙動を変更する必要がある。と一口に言っても、 Swift 周りだけを書き換えるようなシンプルな方法は存在しないので難しいところ。とりあえずコメントアウトだけして効果のほどを確認するか。
+
+ということでキャッシュにある mailer 周りの記述をガッツリ削除してみた::
+
+    Total Incl. Wall Time (microsec):   1,608,736 microsecs
+    Total Incl. CPU (microsecs):    1,561,910 microsecs
+    Total Incl. MemUse (bytes): 38,480,336 bytes
+    Total Incl. PeakMemUse (bytes): 38,631,704 bytes
+    Number of Function Calls:   147,980
+
+おお少し減った。むーんこれはできれば採用したいなあ。 factory 周り改善できないかちょっと考えてみようか。
+
+と思って sfContext とか一通り読んでるけど、まあ毎度思うことだけどこのあたりの実装はひどいですねええ。まあ元凶は Mojavi だけども。
+
+で、割と打つ手なしっぽいんですよねこれ。 sfContext を書き換えれば別なんだけどさー。 sfFactoryConfigHandler を拡張して mailer を書き出さないようにしたっていいんだけど、じゃあ mailer が本当に必要になったときにどうするのかというのが残る。 mailer が必要になったとしても mailer を使わない限りパフォーマンスを劣化させない方法を選びたい。そのためには sfContext は邪魔だ。
+
+とりあえずこれは保留ってことで…… Doctrine のコンパイル周りの見直しやります。
+
+2011/11/02 - 5
+==============
+
+Doctrine のコンパイラは使わず、 OpenPNE が普通に使いそうな Doctrine のファイルのみを core_compile.yml に追加するようにしてみる。対象となるクラスは以下で割り出す::
+
+    grep "50.*Doctrine" DEFINED_CLASSES_COUNT.201101
+
+これで計測してみた::
+
+    Total Incl. Wall Time (microsec):   1,629,906 microsecs
+    Total Incl. CPU (microsecs):    1,576,954 microsecs
+    Total Incl. MemUse (bytes): 35,600,744 bytes
+    Total Incl. PeakMemUse (bytes): 35,752,352 bytes
+    Number of Function Calls:   148,452
+
+おおおおおおおおおおおガッツリ減った！　ガッツリ減ったでー！！！！　うおうういおふふぉうあうふぉうふぁおふおあ
+
+この時点での core_compile.yml は 7.4KB ということで、まだまだ余裕で APC に載るファイルサイズ。うっほほいうっほいほほほ
