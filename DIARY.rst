@@ -575,7 +575,7 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
 2. 変換リストを OpenPNE_KtaiEmoji のコンストラクタ時点で構築しない。なぜなら OpenPNE_KtaiEmoji はシングルトンで、しかも OpenPNE_KtaiEmoji::getInstance() の static 変数にインスタンスが格納されるため、リクエストの終わりまでこの巨大なリストを保持したままインスタンスが残り続けると思われ
 3. キャリアごとの変換リストを持つスクリプトはそれが必要になるまで読み込まない
 
-ということでまず 1 個目からやっていく::
+ということでまず 1 個目と 2 個目からやっていく::
 
     Total Incl. Wall Time (microsec):   1,959,579 microsecs
     Total Incl. CPU (microsecs):    1,579,470 microsecs
@@ -584,3 +584,15 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
     Number of Function Calls:   148,488
 
 なんか CPU 時間は改善したけどメモリ周りは特に変化無し。まったく変化ないっていうのもおかしな話だな。リストの読み込みはまだ発生しているのかな。とりあえず先に進む。
+
+ってあれ、 lib/vendor/OpenPNE2 ってオートロードの対象に入ってるよね？　じゃあ OpenPNE_KtaiEmoji の読み込み時点でキャリア向けライブラリインクルードする必要ないじゃん。なんだよ。
+
+つーことでライブラリの読み込みを取り除いて計測::
+
+    Total Incl. Wall Time (microsec):   1,995,318 microsecs
+    Total Incl. CPU (microsecs):    1,601,641 microsecs
+    Total Incl. MemUse (bytes): 38,846,240 bytes
+    Total Incl. PeakMemUse (bytes): 38,972,272 bytes
+    Number of Function Calls:   148,478
+
+おっと予想に反してそんなに減ってない。特に不要なファイルが読み込まれた形跡もない。うーんそんなもんか。

@@ -4,12 +4,6 @@
  * @license   http://www.php.net/license/3_01.txt PHP License 3.01
  */
 
-require_once 'OpenPNE2/KtaiEmoji/Common.php';
-require_once 'OpenPNE2/KtaiEmoji/Docomo.php';
-require_once 'OpenPNE2/KtaiEmoji/Au.php';
-require_once 'OpenPNE2/KtaiEmoji/Softbank.php';
-require_once 'OpenPNE2/KtaiEmoji/Img.php';
-
 class OpenPNE_KtaiEmoji
 {
     //変換テーブル
