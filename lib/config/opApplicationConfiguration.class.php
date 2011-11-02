@@ -528,10 +528,6 @@ abstract class opApplicationConfiguration extends sfApplicationConfiguration
     $DS = DIRECTORY_SEPARATOR;
     $openidPath = sfConfig::get('sf_lib_dir').$DS.'vendor'.$DS.'php-openid'.$DS;  // ##PROJECT_LIB_DIR##/vendor/php-openid/
     set_include_path($openidPath.PATH_SEPARATOR.get_include_path());
-
-    require_once 'Auth/OpenID/Consumer.php';
-    require_once 'Auth/OpenID/FileStore.php';
-    require_once 'Auth/OpenID/SReg.php';
   }
 
   public function setCacheDir($cacheDir)

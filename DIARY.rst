@@ -507,3 +507,56 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
 * PEAR を毎回読み込んでいるが、本当に必要なのかどうか疑わしい
 
 というところがあるので、ちょっとまずこのあたりの見直しをやっていきたいところ。
+
+2011/11/02 - 1
+==============
+
+つーわけで無駄なスクリプト読み込みの削減をやっていきますよと。
+
+まず OpenID だな。見てみると opApplicationConfiguration::registerJanRainOpenID() でこの辺のライブラリを強制的に読み込んでいるっぽかった。へ？　なんで？　必要なときに読み込めばいいじゃない。ああしかもこいつらオートロードの対象に入ってるじゃん。じゃあここでの読み込みはまったく無駄だよ。（オートロードの対象から外すかどうかはひとまず置いておく。このあたりも segfault あたりで一悶着ありそうな）
+
+で、 opApplicationConfiguration::registerJanRainOpenID() でスクリプト読み込みをおこなわないようにした状態で計測。まずは改善前::
+
+    Total Incl. Wall Time (microsec):   1,753,644 microsecs
+    Total Incl. CPU (microsecs):    1,642,585 microsecs
+    Total Incl. MemUse (bytes): 39,693,648 bytes
+    Total Incl. PeakMemUse (bytes): 39,812,416 bytes
+    Number of Function Calls:   148,627
+
+改善後::
+
+    Total Incl. Wall Time (microsec):   1,693,539 microsecs
+    Total Incl. CPU (microsecs):    1,609,223 microsecs
+    Total Incl. MemUse (bytes): 39,409,872 bytes
+    Total Incl. PeakMemUse (bytes): 39,528,728 bytes
+    Number of Function Calls:   148,627
+
+あらら思ったより改善しなかったな……と思いきや、まだ OpenID 関連のライブラリが読み込まれていたどうも opAuthOpenIDPlugin の初期化処理時点で読み込んでいるらしい。むーんこれは……
+
+と思って opAuthAdapterOpenID::configure() を確認してみたら、ここでも必要なライブラリの require をやっているっぽかった。えー？　この require もいらないよもう。つーことで以下のパッチで解決::
+
+    diff --git a/lib/opAuthAdapterOpenID.class.php b/lib/opAuthAdapterOpenID.class.php
+    index 52a943d..a0ad177 100644
+    --- a/lib/opAuthAdapterOpenID.class.php
+    +++ b/lib/opAuthAdapterOpenID.class.php
+    @@ -25,9 +25,6 @@ class opAuthAdapterOpenID extends opAuthAdapter
+       public function configure()
+       {
+         sfOpenPNEApplicationConfiguration::registerJanRainOpenID();
+    -
+    -    require_once 'Auth/OpenID/SReg.php';
+    -    require_once 'Auth/OpenID/AX.php';
+       }
+     
+       public function getConsumer()
+
+で、計測::
+
+    Total Incl. Wall Time (microsec):   2,005,302 microsecs
+    Total Incl. CPU (microsecs):    1,607,431 microsecs
+    Total Incl. MemUse (bytes): 38,889,792 bytes
+    Total Incl. PeakMemUse (bytes): 39,008,312 bytes
+    Number of Function Calls:   148,488
+
+おおさっきのとあわせるとかなりマシになったか。 OpenID や Yadis 関連のライブラリが読み込まれることもない。よしよし。
+
