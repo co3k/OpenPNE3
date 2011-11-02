@@ -104,7 +104,8 @@
 - %SF_LIB_DIR%/util/opDoctrineMapperHydrator.class.php
 - %SF_LIB_DIR%/util/opDoctrineModule_Formatter.class.php
 - %SF_LIB_DIR%/util/opDoctrineQuery.class.php
-# - %SF_LIB_DIR%/util/opDoctrineRecord.class.php # it needs Zend_Acl
+- %SF_LIB_DIR%/util/opAccessControlRecordInterface.class.php
+- %SF_LIB_DIR%/util/opDoctrineRecord.class.php
 - %SF_LIB_DIR%/response/opWebResponse.class.php
 - %SF_LIB_DIR%/view/opView.class.php
 - %SF_LIB_DIR%/request/opWebRequest.class.php
@@ -139,23 +140,20 @@
 - %SF_LIB_DIR%/model/doctrine/SnsConfigTable.class.php
 
 # most loaded models
-# (the followings need to load opDoctrineRecord)
-#- MemberConfig
-#- Member
-#- Gadget
-#- BaseSnsTerm
-#- BaseSnsConfig
-#- BaseMemberConfig
-#- BaseMember
-#- BaseGadget
-#- BaseBannerUseImage
-#- BaseBanner
-#- BannerUseImage
-#- BannerTranslation
-#- Banner
-#- SnsTermTranslation
-#- SnsTerm
-#- SnsConfig
+- %SF_LIB_DIR%/model/doctrine/base/BaseMemberConfig.class.php
+- %SF_LIB_DIR%/model/doctrine/MemberConfig.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseMember.class.php
+- %SF_LIB_DIR%/model/doctrine/Member.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseGadget.class.php
+- %SF_LIB_DIR%/model/doctrine/Gadget.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseBannerUseImage.class.php
+- %SF_LIB_DIR%/model/doctrine/BannerUseImage.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseBanner.class.php
+- %SF_LIB_DIR%/model/doctrine/Banner.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseSnsTerm.class.php
+- %SF_LIB_DIR%/model/doctrine/SnsTerm.class.php
+- %SF_LIB_DIR%/model/doctrine/base/BaseSnsConfig.class.php
+- %SF_LIB_DIR%/model/doctrine/SnsConfig.class.php
 
 # pc_frontend
 - %SF_LIB_DIR%/controller/opPcFrontWebController.class.php

@@ -693,3 +693,16 @@ Doctrine のコンパイラは使わず、 OpenPNE が普通に使いそうな D
 このメソッドが何もせずに array() を返すように変更してみると Total Incl. MemUse (bytes) が 35,141,448 bytes になる。ちょっとの労力でこれが改善できるなら改善したいんだけれど、いろいろ考えることが多いなあ。下手にキャッシュとかしても効果的かどうかわからない。
 
 とりあえずこれはこのままにしておくか。
+
+2011/11/02 - 8
+==============
+
+結局、我慢できなくてレコードも core_compile に入れた::
+
+    Total Incl. Wall Time (microsec):   1,607,451 microsecs
+    Total Incl. CPU (microsecs):    1,569,958 microsecs
+    Total Incl. MemUse (bytes): 35,304,784 bytes
+    Total Incl. PeakMemUse (bytes): 35,456,248 bytes
+    Number of Function Calls:   147,874
+
+うーん微妙だ。 Doctrine_Table のセットアップ周りでコストになっているようなので、もしやと思ったんだけれども……

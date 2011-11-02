@@ -35,6 +35,9 @@ class opProjectConfiguration extends sfProjectConfiguration
 
   public function setup()
   {
+    // preload Zend_Acl_Resource_Interface for performance reason
+    require_once dirname(__FILE__).'/../vendor/Zend/Acl/Resource/Interface.php';
+
     $this->enableAllPluginsExcept(array('sfPropelPlugin'));
     $this->setIncludePath();
 
