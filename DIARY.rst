@@ -560,3 +560,27 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
 
 おおさっきのとあわせるとかなりマシになったか。 OpenID や Yadis 関連のライブラリが読み込まれることもない。よしよし。
 
+2011/11/02 - 2
+==============
+
+かなり機嫌よくなってきた。次は OpenPNE_KtaiEmoji だ。こいつを必要ないときには読み込まないようにすることはできないか。少なくとも各キャリア向けのファイルを読み込まないようにすることはできないか。
+
+どうも opEmojiFilter で OpenPNE_KtaiEmoji::convertEmoji() がロードされるっぽい。で、 opEmojiFilter は毎回読み込まれると。別にここは特に間違っちゃいない。しかし変換対象となる文字がないにもかかわらずあのような巨大なファイルが読み込まれるのは問題。
+
+うわ、というか OpenPNE_KtaiEmoji そのものがデカイ。ちょっと勘弁してよー。このコードはないわ。よく 2 系の時に問題にならなかったな。いや問題と考えるような人がいなかったんだな俺を含め。
+
+とりあえずの方針としては以下。丸ごとコードを書き換えたいところが俺はそういう愚かなことをしない主義だ (Joel on Software - Things You Should Never Do, Part I : http://www.joelonsoftware.com/articles/fog0000000069.html を金科玉条にしている。で OpenPNE3 のときに甘言にのせられてこれを破ってひどい目に遭ったと)。
+
+1. OpenPNE_KtaiEmoji で持っている変換リストを外に出す
+2. 変換リストを OpenPNE_KtaiEmoji のコンストラクタ時点で構築しない。なぜなら OpenPNE_KtaiEmoji はシングルトンで、しかも OpenPNE_KtaiEmoji::getInstance() の static 変数にインスタンスが格納されるため、リクエストの終わりまでこの巨大なリストを保持したままインスタンスが残り続けると思われ
+3. キャリアごとの変換リストを持つスクリプトはそれが必要になるまで読み込まない
+
+ということでまず 1 個目からやっていく::
+
+    Total Incl. Wall Time (microsec):   1,959,579 microsecs
+    Total Incl. CPU (microsecs):    1,579,470 microsecs
+    Total Incl. MemUse (bytes): 38,889,792 bytes
+    Total Incl. PeakMemUse (bytes): 39,008,312 bytes
+    Number of Function Calls:   148,488
+
+なんか CPU 時間は改善したけどメモリ周りは特に変化無し。まったく変化ないっていうのもおかしな話だな。リストの読み込みはまだ発生しているのかな。とりあえず先に進む。
