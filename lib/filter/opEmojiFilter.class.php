@@ -32,14 +32,16 @@ class opEmojiFilter extends sfFilter
     $request = $this->getContext()->getRequest();
     $content = $response->getContent();
 
-    if (!$request->isMobile())
+    $isMobile = sfConfig::get('app_is_mobile', false);
+
+    if (!$isMobile)
     {
       list($list, $content) = opToolkit::replacePatternsToMarker($content);
     }
 
     $content = OpenPNE_KtaiEmoji::convertEmoji($content);
 
-    if (!$request->isMobile())
+    if (!$isMobile)
     {
       $content = str_replace(array_keys($list), array_values($list), $content);
     }

@@ -596,3 +596,22 @@ Doctrine 以外のファイルも含めて、どのクラスファイルがよ�
     Number of Function Calls:   148,478
 
 おっと予想に反してそんなに減ってない。特に不要なファイルが読み込まれた形跡もない。うーんそんなもんか。
+
+2011/11/02 - 3
+==============
+
+次は Net_UserAgent_Mobile と Net_IPv4 を見てみる。おっとどっちも opEmojiFilter で opWebRequest::isMobile() するときに読み込まれているぞ。
+
+opWebRequest::isMobile() がこれらのライブラリを使うのは間違いではないけれど、 opEmojiFilter が opWebRequest::isMobile() 呼ぶのは間違いじゃね。 opEmojiFilter は現在のユーザエージェントがモバイルかどうかではなく、現在提供しているページがモバイルかどうかで判断するべき。
+
+で、直してみた::
+
+    Total Incl. Wall Time (microsec):   1,653,887 microsecs
+    Total Incl. CPU (microsecs):    1,589,045 microsecs
+    Total Incl. MemUse (bytes): 38,800,736 bytes
+    Total Incl. PeakMemUse (bytes): 38,951,960 bytes
+    Number of Function Calls:   148,395
+
+うう……なんか地道だ。でもそんなもんだよねー。
+
+と思ったら Net_UserAgent_Mobile はまだ読み込まれてらっしゃった。おっとしかも web/prof.php か。うーん……これはしょうがないかな。とりあえず諦めて次に行くか。
