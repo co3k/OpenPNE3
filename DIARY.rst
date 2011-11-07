@@ -706,3 +706,92 @@ Doctrine のコンパイラは使わず、 OpenPNE が普通に使いそうな D
     Number of Function Calls:   147,874
 
 うーん微妙だ。 Doctrine_Table のセットアップ周りでコストになっているようなので、もしやと思ったんだけれども……
+
+2011/11/07 - 1
+==============
+
+いまさらの話でアレなんですが、 Wall Time とか CPU Time とかがヤケに高い数字をたたき出しているのは、 XDebug 拡張を有効にしているからで、拡張を外すと 0.5 sec くらい縮まります。メモリ使用量も 1MB くらい下がります。
+
+さて、いまのところ問題になっているのは Doctrine_Connection::getTable() で大量にメモリを喰うという問題なのですが、これにはいろいろな原因があって、
+
+* このメソッドでコールする class_exists() で 3,256,768 Bytes のメモリを消費している
+* このメソッドでコールする Doctrine_Table::__construct() がコールする、各レコードクラスの ::setUp() メソッドで計 2MB 程度のメモリを消費する
+* このメソッドでコールする Doctrine_Table::__construct() がコールする Doctrine_Table::initDefinition() がコールする、各レコードクラスの ::setTableDefinition() メソッドで計 1MB 程度のメモリを消費する
+* このメソッドでコールする Doctrine_Table::__construct() がコールする Doctrine_Table::initDefinition() がコールする class_exists() で 5,145,920 Bytes のメモリを消費している
+
+というもの。
+
+::setUp() なり ::setTableDefinition() をもうちょっとなんとかできないかなと思ったけれど、このあたりはちょっと手を加えにくいのと、個々のメモリ消費は目くじらたてるほど多いわけではない（一番高いもので 65,072 Bytes 程度）ので、とりあえず一旦置いておくことにした（でもなぜか毎回動的にテーブル名を構築しているところとかチビチビ改善していけば 1MB 弱くらいの改善はできそうな気はしたけど）。
+
+で、 class_exists() だけれども、やっぱりこいつはオートローディングの仕業です。
+
+まず、 Doctrine_Connection::getTable() における class_exists() は Doctrine_Core::getTable() の引数として与えられたテーブルクラスの存在確認というお仕事をされている。
+
+このうち、最初に読み込まれるのは SnsTermTable なので、こいつのコストを見てみる……あ、これは core_compile の対象に入っているんだった。ということで、 core_compile の対象に入っていないもののなかで最初に読み込まれた ApplicationInviteTable を見てみることにする。
+
+* (run_init::opOpenSocialPlugin/ApplicationInviteTable.class.php : 163,552 Bytes) + (load::opOpenSocialPlugin/ApplicationInviteTable.class.php : 3,576 Bytes)
+* (run_init::doctrine/PluginApplicationInviteTable.class.php : 1,144 Bytes) + (load::doctrine/PluginApplicationInviteTable.class.php : 80,336 Bytes)
+
+で、 PluginApplicationInviteTable は (core_compile によって読み込み済みの) Doctrine_Table を継承していますと。 PluginApplicationInviteTable.class.php の load + run_init で 81,480 Bytes かかっているということは、 ApplicationInviteTable のメモリ使用量のうちの 82,072 Bytes + 3,576 Bytes が、 ApplicationInviteTable の読み込みのみで消費したメモリということになるかな。
+
+次に Doctrine_Table::initDefinition() でコールされる class_exists() はどうかなということで、今度は ApplicationInvite を見てみることにしますと。
+
+* (run_init::opOpenSocialPlugin/ApplicationInvite.class.php : 279,336) + (load::opOpenSocialPlugin/ApplicationInvite.class.php : 3,096)
+* (run_init::doctrine/PluginApplicationInvite.class.php : 185,504) + (load::doctrine/PluginApplicationInvite.class.php : 3,568)
+* (run_init::base/BaseApplicationInvite.class.php : 1,128) + (load::base/BaseApplicationInvite.class.php : 88,224)
+
+うーんさっきから気になっているんだけど、自動生成された基底クラスの load でメモリ使用量が跳ね上がってるのはなんなのかな。まあとりあえず置いておくけど。
+
+せっかく自動生成するのだからもっとメモリに優しいコードを生成したりとか、間に挟んでいるクラスを取っ払ったりとかそういう発想になるかなーとかいろいろ考えてたけど妙案が思いつかない。
+
+ここまで頭をひねっていて、そういえば初期化コストの改善といえば Gree Fast Processor があったじゃないか、と思うに至りましたよ。
+
+Gree Fast Processor 導入
+------------------------
+
+つーことで、 http://labs.gree.jp/blog/2010/05/61/ のエントリを参考に、まずは Gree Fast Processor を導入してみる::
+
+    $ wget http://labs.gree.jp/data/source/gree_fast_processor-0.0.1.tgz
+    $ tar xf gree_fast_processor-0.0.1.tgz
+    $ cd gree_fast_processor-0.0.1
+    $ phpize; ./configure; make; sudo make install
+
+おっと::
+
+    /tmp/gree_fast_processor-0.0.1/php_gree_fast_processor.c:31:23: error: sys/epoll.h: No such file or directory
+
+epoll とか OSX で使えないっつーの。
+
+libevent 使って書き直してパッチとか置いておこうと思って、とりあえず epoll のインクルード外してなんとなくコンパイルしてみるかーとか思ったらコンパイル通ってしまったんですけど！::
+
+    $ make test
+    (snip)
+    No tests were run.
+
+そうですか！
+
+とりあえず先に進むか……::
+
+    $ mkdir -p ~/Sites/sf/op3-ebihara/lib/vendor/gree
+    $ cp gree_fast_processor.php gree_fast_processor_listener.php ~/Sites/sf/op3-ebihara/lib/vendor/gree 
+
+この状態で prof.php に Gree_Fast_Processor 用の記述を追加する。そして Gree_Fast_Processor::$ident_list にハンドラを追加するらしい::
+
+    define('PATH_TO_OP3_LISTENER', dirname(__FILE__).'/../../util/gree_fast_processor_handler.php');
+
+して、::
+
+    var	$ident_list = array(
+        // sample
+        'op3_ebihara' => PATH_TO_OP3_LISTENER,
+    );
+
+した。
+
+あとはリスナーを追加するというのでブログの情報の通りやってみた。
+
+で、試したところ "Connection reset by peer" な Warning が gree_fast_processor.php on line 137 で出る。んーどっかで exit() とかしてるんかなあ。
+
+うーん、まあ、 Gree Fast Processor を導入して終わりっていうのはいろいろな意味で現実的じゃないし、とりあえず本格的に試すのはまたの機会ということで、ここはとりあえず諦めるか。
+
+じゃあどうすればというのがやっぱり難しいな−。レコードクラスとかテーブルクラスとかをシンプルにしていく方法しか策はない気がするなあ。とりあえず明日に回す。成果出せなかったなー。
