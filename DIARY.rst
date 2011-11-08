@@ -822,3 +822,16 @@ libevent 使って書き直してパッチとか置いておこうと思って�
 Doctrine_Core::getTable() にかかるメモリは 11,037,760 Bytes から 10,761,800 Bytes に減った。
 
 コンパイル済みクラスファイルの run_init には、一番コストがかかったもので 421,776 Bytes 消費していた。うーんもうちょっとなんとかならないものかな。でもこれ以上減らすにはスクリプトの内容を変えるくらいのコンパイルをしないとダメな気がする。
+
+2011/11/08 - 2
+==============
+
+そういや core_compile でモデルとか読み込んでいるのと、今回のコンパイルのやつはどちらか一方にしないとなにかとアレだなーとか思って、 core_compile のほうを外してみた::
+
+    Total Incl. Wall Time (microsec):   1,654,670 microsecs
+    Total Incl. CPU (microsecs):    1,598,515 microsecs
+    Total Incl. MemUse (bytes): 34,921,000 bytes
+    Total Incl. PeakMemUse (bytes): 35,072,456 bytes
+    Number of Function Calls:   147,211
+
+おお、さらに減った。こういうの大事だなー。
