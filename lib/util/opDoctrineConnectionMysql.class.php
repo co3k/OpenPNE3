@@ -103,4 +103,19 @@ class opDoctrineConnectionMysql extends Doctrine_Connection_Mysql_ExtraFunctions
 
     return $res;
   }
+
+  public function getTable($name)
+  {
+    if (isset($this->tables[$name])) {
+        return $this->tables[$name];
+    }
+
+    $pathToCompiled = sfConfig::get('sf_lib_dir').'/model/compiled/'.$name.'.compiled.php';
+    if (is_file($pathToCompiled))
+    {
+        require_once $pathToCompiled;
+    }
+
+    return parent::getTable($name);
+  }
 }

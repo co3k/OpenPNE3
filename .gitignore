@@ -17,6 +17,7 @@ data/sql/*.*
 lib/form/doctrine/base/*
 lib/filter/doctrine/base/*
 lib/model/doctrine/op*Plugin
+lib/model/compiled
 web/*Plugin
 web/sf
 data/config/*

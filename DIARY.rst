@@ -790,8 +790,35 @@ libevent 使って書き直してパッチとか置いておこうと思って�
 
 あとはリスナーを追加するというのでブログの情報の通りやってみた。
 
-で、試したところ "Connection reset by peer" な Warning が gree_fast_processor.php on line 137 で出る。んーどっかで exit() とかしてるんかなあ。
+で、試したところ "Connection reset by peer" な Warning が gree_fast_processor.php on line 137 で出る。んーどっかで exit() とかしてるんかなあ。それとも単純に epoll 外しただけなのが悪いですか。
 
 うーん、まあ、 Gree Fast Processor を導入して終わりっていうのはいろいろな意味で現実的じゃないし、とりあえず本格的に試すのはまたの機会ということで、ここはとりあえず諦めるか。
 
 じゃあどうすればというのがやっぱり難しいな−。レコードクラスとかテーブルクラスとかをシンプルにしていく方法しか策はない気がするなあ。とりあえず明日に回す。成果出せなかったなー。
+
+2011/11/08 - 1
+==============
+
+昨日帰り道で、「レコードクラスファイルとテーブルファイルをセットでモデル単位でコンパイルすればいいんじゃね？」という案が浮かんだのでやってみる。（こういうの帰り道で浮かぶのやめてほしい）
+
+ということでやってみた。まずは Before::
+
+    Total Incl. Wall Time (microsec):   1,691,133 microsecs
+    Total Incl. CPU (microsecs):    1,618,762 microsecs
+    Total Incl. MemUse (bytes): 35,309,968 bytes
+    Total Incl. PeakMemUse (bytes): 35,461,440 bytes
+    Number of Function Calls:   147,961
+
+そして After::
+
+    Total Incl. Wall Time (microsec):   1,641,909 microsecs
+    Total Incl. CPU (microsecs):    1,596,500 microsecs
+    Total Incl. MemUse (bytes): 35,043,608 bytes
+    Total Incl. PeakMemUse (bytes): 35,195,112 bytes
+    Number of Function Calls:   147,204
+
+おお。
+
+Doctrine_Core::getTable() にかかるメモリは 11,037,760 Bytes から 10,761,800 Bytes に減った。
+
+コンパイル済みクラスファイルの run_init には、一番コストがかかったもので 421,776 Bytes 消費していた。うーんもうちょっとなんとかならないものかな。でもこれ以上減らすにはスクリプトの内容を変えるくらいのコンパイルをしないとダメな気がする。
