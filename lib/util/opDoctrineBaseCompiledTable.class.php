@@ -2,7 +2,9 @@
 
 abstract class opDoctrineBaseCompiledTable extends Doctrine_Table
 {
-  protected $isCompiled = false;
+  public $isCompiled = false;
+
+  protected $availableDqlCallbacks = array();
 
   public $definition;
 
@@ -41,6 +43,11 @@ abstract class opDoctrineBaseCompiledTable extends Doctrine_Table
 
   public function initDefinition()
   {
+    if (!$this->isCompiled)
+    {
+      return parent::initDefinition();
+    }
+
     $this->setTableDefinition();
 
     $this->_options['declaringClass'] = $name = $this->_options['name'];
@@ -54,7 +61,7 @@ abstract class opDoctrineBaseCompiledTable extends Doctrine_Table
 
     if (!isset($this->_options['tableName']))
     {
-      $this->setTableName(Doctrine_Inflector::tableize($class->getName()));
+      $this->setTableName(Doctrine_Inflector::tableize($name));
     }
   }
 }

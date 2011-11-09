@@ -98,7 +98,9 @@ EOF;
         $table = Doctrine::getTable($modelName);
         if (!$table->getOption('joinedParents'))
         {
-          $lines[2] = $this->getCompiledFlagString().PHP_EOL.$this->buildTableDefinitionString($modelName).$lines[2];
+          $lines[2] = $this->getAvailableCallbacksPropertyString($modelName).PHP_EOL
+            .$this->getCompiledFlagString().PHP_EOL
+            .$this->buildTableDefinitionString($modelName).$lines[2];
         }
       }
 
@@ -118,7 +120,7 @@ EOF;
 
   public function getCompiledFlagString()
   {
-    return 'protected $isCompiled = true;';
+    return 'public $isCompiled = true;';
   }
 
   public function buildTableDefinitionString($model)
@@ -142,5 +144,30 @@ EOF;
     $lines = array_slice(file($reflectionMethod->getFileName()), $start, ($end - $start));
 
     return implode('', $lines);
+  }
+
+  public function getListOfDqlCallbacks($model)
+  {
+    $callbacks = array(
+      'preDqlDelete' => false,
+      'preDqlUpdate' => false,
+      'preDqlSelect' => false,
+    );
+
+    foreach ($callbacks as $key => $value)
+    {
+      $r = new ReflectionMethod($model, $key);
+      if ('Doctrine_Record' !== $r->class)
+      {
+        $callbacks[$key] = true;
+      }
+    }
+
+    return $callbacks;
+  }
+
+  public function getAvailableCallbacksPropertyString($model)
+  {
+    return 'protected $availableDqlCallbacks = '.var_export($this->getListOfDqlCallbacks($model), true).';';
   }
 }

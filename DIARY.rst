@@ -983,3 +983,36 @@ Doctrine を書き換えるアプローチと違い、たぶんこれだけだ�
     Number of Function Calls:   148,154
 
 んー？　よくよく見てみると、 opDoctrineConnectionMysql::getTable() のメモリ使用量は 7,184,424 Bytes まで減っていて、このメソッドだけを見ると 30MB のときより改善されていることがわかる。やっぱり原因は別のところにあると。
+
+2011/11/09 - 5
+==============
+
+SnsConfigTable::get() が 400,800 Bytes から 174,808 Bytes まで増加している。見てみると、 Doctrine_Table::getRecordInstance() のコストが 26,416 Bytes から 6,469,408 Bytes に上昇していた。 Doctrine_Record を必要とし、このタイミングで初期化をおこなったのだから上昇するのは当然なのだが、これは本当に必要な初期化なのか。
+
+このメソッドは Doctrine_Query_Abstract::_preQuery() で 65 回、 Doctrine_Hydrator_Graph::hydrateResultSet() で 38 回コールされるが、 Doctrine_Query_Abstract での ::getRecordInstance() のコールは本当に必要なのだろうか。
+
+見てみると、 preDql*() のコールバックメソッドをコールするためにレコードインスタンスを初期化していることがわかった。これをどうにか改善する必要がある。
+
+それから、適切に getRecordInstance() が呼ばれたときのコストを下げる必要がある。いまは一時的にレコードクラスのコンパイルをやめているが、これを復活させる必要があるはず。
+
+まず、 _preQuery() をどうにかする。 _getDqlCallbackComponents() がコールバックのないコンポーネントを返さなければいいように思う。この有無はコンパイル時に判明するはずなので、コンパイル時に前もって存在チェック用のフラグを仕込んでおけばよいのではないか。
+
+で、どうにかした::
+
+    Overall Summary
+    Total Incl. Wall Time (microsec):   2,068,062 microsecs
+    Total Incl. CPU (microsecs):    1,617,110 microsecs
+    Total Incl. MemUse (bytes): 34,040,776 bytes
+    Total Incl. PeakMemUse (bytes): 34,192,544 bytes
+    Number of Function Calls:   147,163
+
+とりあえず以前より悪くなったという状態は脱して正直ほっとしている。
+
+Doctrine_Query_Abstract::_preQuery() のコストは 1,954,088 Bytes にまで下がった。この大半が Doctrine_Query_Abstract::_getDqlCallbackComponents() で、 1,971,592 Bytes も消費している。まあ、中で Doctrine_Query::getSqlQuery() してるからなんだけど、これは正直なんとかならんのか。とりあえず今回はスキップする。
+
+残りの getRecordInstance() は Doctrine_Hydrator_Graph::hydrateResultSet() 経由で呼ばれているんだけれど、これもまだ適切とは言えないなあ。 Doctrine_Hydrator_RecordDriver で getRecordInstance() を呼ぶなら分かるんだけど、他のハイドレーション方法を選択しているのにレコードインスタンスの初期化をおこなうのはやっぱり無駄。なので、
+
+* Doctrine_Hydrator_RecordDriver のときだけレコードインスタンスを初期化するようにする
+* レコードインスタンスを初期化したときのコストをコンパイルで減らす
+
+この二つをやれば 30MB とはいかないまでも 32MB は行くんじゃないかな。とりあえず今日はいい加減帰る。

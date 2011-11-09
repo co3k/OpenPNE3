@@ -345,4 +345,31 @@ class opDoctrineQuery extends Doctrine_Query
 
     return $text;
   }
+
+  protected function _getDqlCallbackComponents($params = array())
+  {
+    $results = parent::_getDqlCallbackComponents($params);
+    $callback = $this->_getDqlCallback();
+
+    foreach ($results as $alias => $component)
+    {
+      $table = $component['table'];
+      if (!($table instanceof opDoctrineBaseCompiledTable))
+      {
+        continue;
+      }
+
+      if (!$table->isCompiled)
+      {
+        continue;
+      }
+
+      if (empty($table->availableDqlCallbacks[$callback['callback']]))
+      {
+        unset($results[$alias]);
+      }
+    }
+
+    return $results;
+  }
 }
