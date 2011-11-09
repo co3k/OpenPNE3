@@ -294,7 +294,7 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
      */
     public function initDefinition()
     {
-        $name = 'Base'.$this->_options['name'].'Light';
+        $name = $this->_options['name'];
         if ( ! class_exists($name) || empty($name)) {
             throw new Doctrine_Exception("Couldn't find class " . $name);
         }
@@ -308,10 +308,6 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
 
         do {
             if ($class === 'Doctrine_Record') {
-                break;
-            }
-
-            if ($class === 'opDoctrineSimpleRecord') {
                 break;
             }
 
@@ -333,7 +329,7 @@ class Doctrine_Table extends Doctrine_Configurable implements Countable
         if (method_exists($record, 'setTableDefinition')) {
             $record->setTableDefinition();
             // get the declaring class of setTableDefinition method
-            $method = new ReflectionMethod($name, 'setTableDefinition');
+            $method = new ReflectionMethod($this->_options['name'], 'setTableDefinition');
             $class = $method->getDeclaringClass();
 
         } else {

@@ -50,7 +50,6 @@ class opProjectConfiguration extends sfProjectConfiguration
     ));
 
     $this->dispatcher->connect('command.pre_command', array(__CLASS__, 'listenToPreCommandEvent'));
-    $this->dispatcher->connect('command.post_command', array($this, 'generateLightDoctrineRecord'));
     $this->dispatcher->connect('doctrine.filter_cli_config', array(__CLASS__, 'filterDoctrineCliConfig'));
 
     $this->setupProjectOpenPNE();
@@ -164,27 +163,5 @@ class opProjectConfiguration extends sfProjectConfiguration
     $config['migrations_path'] = sfConfig::get('sf_data_dir').'/migrations/generated';
 
     return $config;
-  }
-
-  public function generateLightDoctrineRecord(sfEvent $event)
-  {
-    if ($event->getSubject() instanceof sfDoctrineBuildModelTask)
-    {
-      $lightDir = sfConfig::get('sf_lib_dir').'/model/light/';
-      $event->getSubject()->getFileSystem()->mkdirs($lightDir);
-
-      $config = $event->getSubject()->getCliConfig();
-      $models = sfFinder::type('file')->name('Base*.php')->in($config['models_path']);
-      foreach ($models as $model)
-      {
-        $baseModelName = basename($model, '.class.php');
-        $lightClass = $baseModelName.'Light';
-
-        $code = file_get_contents($model);
-        $code = preg_replace('/abstract class '.$baseModelName.' extends opDoctrineRecord/', 'class '.$lightClass.' extends opDoctrineSimpleRecord', $code);
-
-        file_put_contents($lightDir.$lightClass.'.class.php', $code);
-      }
-    }
   }
 }

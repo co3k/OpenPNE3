@@ -66,16 +66,14 @@ EOF;
     if ($isPluginModel)
     {
       $classes = array(
-        /*'Base'.$modelName, 'Plugin'.$modelName, $modelName, */
+        'Base'.$modelName, 'Plugin'.$modelName, $modelName,
         'Plugin'.$modelName.'Table', $modelName.'Table',
-        'Base'.$modelName.'Light',
       );
     }
     else
     {
       $classes = array(
-        /*'Base'.$modelName, $modelName,*/ $modelName.'Table',
-        'Base'.$modelName.'Light',
+        'Base'.$modelName, $modelName, $modelName.'Table',
       );
     }
 
@@ -83,11 +81,8 @@ EOF;
 
     foreach ($classes as $class)
     {
-      try
-      {
-        $r = new ReflectionClass($class);
-      }
-      catch (ReflectionException $e)
+      $r = new ReflectionClass($class);
+      if (!$r)
       {
         continue;
       }

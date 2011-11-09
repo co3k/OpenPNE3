@@ -18,7 +18,6 @@ lib/form/doctrine/base/*
 lib/filter/doctrine/base/*
 lib/model/doctrine/op*Plugin
 lib/model/compiled
-lib/model/light
 web/*Plugin
 web/sf
 data/config/*
