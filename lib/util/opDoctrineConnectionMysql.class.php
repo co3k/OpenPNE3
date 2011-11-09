@@ -116,6 +116,8 @@ class opDoctrineConnectionMysql extends Doctrine_Connection_Mysql_ExtraFunctions
         require_once $pathToCompiled;
     }
 
-    return parent::getTable($name);
+    $result = parent::getTable($name);
+
+    return $result;
   }
 }

@@ -98,6 +98,8 @@
 
 # OpenPNE
 - %SF_LIB_DIR%/vendor/doctrine_extensions/ExtraFunctions/lib/Doctrine/Connection/Mysql/ExtraFunctions.php
+- %SF_LIB_DIR%/util/opDoctrineDefinitionRecord.class.php
+- %SF_LIB_DIR%/util/opDoctrineBaseCompiledTable.class.php
 - %SF_LIB_DIR%/util/opAccessControlDoctrineTable.class.php
 - %SF_LIB_DIR%/util/opDoctrineConnectionMysql.class.php
 - %SF_LIB_DIR%/util/opDoctrineEventNotifier.class.php
@@ -157,7 +159,3 @@
 #
 # pc_frontend
 - %SF_LIB_DIR%/controller/opPcFrontWebController.class.php
-
-# experimental
-- %SF_LIB_DIR%/util/opDoctrineDefinitionRecord.class.php
-- %SF_LIB_DIR%/util/opDoctrineBaseCompiledTable.class.php

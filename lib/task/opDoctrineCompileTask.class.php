@@ -41,6 +41,7 @@ EOF;
     $config = $this->getCliConfig();
 
     $dir = sfConfig::get('sf_lib_dir').'/model/compiled/';
+    $this->getFilesystem()->remove(sfFinder::type('file')->in($dir));
     $this->getFilesystem()->mkdirs($dir);
 
     $schema = $this->prepareSchemaFile($config['yaml_schema_path']);
@@ -97,7 +98,7 @@ EOF;
         $table = Doctrine::getTable($modelName);
         if (!$table->getOption('joinedParents'))
         {
-          $lines[2] = $this->buildTableDefinitionString($modelName).$lines[2];
+          $lines[2] = $this->getCompiledFlagString().PHP_EOL.$this->buildTableDefinitionString($modelName).$lines[2];
         }
       }
 
@@ -113,6 +114,11 @@ EOF;
     }
 
     return $content;
+  }
+
+  public function getCompiledFlagString()
+  {
+    return 'protected $isCompiled = true;';
   }
 
   public function buildTableDefinitionString($model)

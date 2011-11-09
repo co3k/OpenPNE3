@@ -1,9 +1,18 @@
 <?php
 
-class opDoctrineBaseCompiledTable extends Doctrine_Table
+abstract class opDoctrineBaseCompiledTable extends Doctrine_Table
 {
+  protected $isCompiled = false;
+
+  public $definition;
+
   public function __construct($name, Doctrine_Connection $conn, $initDefinition = false)
   {
+    if (!$this->isCompiled)
+    {
+      return parent::__construct($name, $conn, $initDefinition);
+    }
+
     $this->definition = new opDoctrineDefinitionRecord($this);
 
     parent::__construct($name, $conn, false);
@@ -47,7 +56,5 @@ class opDoctrineBaseCompiledTable extends Doctrine_Table
     {
       $this->setTableName(Doctrine_Inflector::tableize($class->getName()));
     }
-
-    return $record;
   }
 }
