@@ -61,19 +61,18 @@ EOF;
     }
     $isPluginModel = ($basePath !== $coreBasePath);
     $isAbstract = !empty($definition['abstract']);
-    $isAbstract = true;
 
     if ($isPluginModel)
     {
       $classes = array(
-        'Base'.$modelName, 'Plugin'.$modelName, $modelName,
+        /*'Base'.$modelName, 'Plugin'.$modelName, $modelName, */
         'Plugin'.$modelName.'Table', $modelName.'Table',
       );
     }
     else
     {
       $classes = array(
-        'Base'.$modelName, $modelName, $modelName.'Table',
+        /*'Base'.$modelName, $modelName,*/ $modelName.'Table',
       );
     }
 
@@ -92,28 +91,14 @@ EOF;
 
       $lines = array_slice(file($r->getFileName()), $start, ($end - $start));
 
-      // removes ::setTableDefinition()
-      if (!$isAbstract && 'Base'.$modelName === $class)
-      {
-        $rm = new ReflectionMethod($class, 'setTableDefinition');
-        if ($rm && $rm->getFileName() === $r->getFileName())
-        {
-          $methodStart = $rm->getStartLine() - $start;
-          $methodEnd = $rm->getEndLine() - $start;
-
-          $head = array_slice($lines, 0, $methodStart - 1);
-          $tail = array_slice($lines, $methodEnd);
-
-          $lines = array_merge($head, $tail);
-        }
-      }
-
-      // append properties like [record]::setTableDefinition()
+      // append constructors for performance
       if (!$isAbstract && $modelName.'Table' === $class)
       {
         $table = Doctrine::getTable($modelName);
-        $table->initDefinition();
-        $lines[2] =  $this->buildTablePropertyString($table).$lines[2];
+        if (!$table->getOption('joinedParents'))
+        {
+          $lines[2] = $this->buildTableDefinitionString($modelName).$lines[2];
+        }
       }
 
       $results[] = sprintf('if (!class_exists(\'%s\', false)) {', $class);
@@ -122,58 +107,34 @@ EOF;
     }
 
     $content = sfToolkit::stripComments('<?php '.implode(PHP_EOL, $results));
+    if (!$isAbstract && $modelName.'Table' === $class)
+    {
+      $content = str_replace('extends Doctrine_Table', 'extends opDoctrineBaseCompiledTable', $content);
+    }
 
     return $content;
   }
 
-  public function buildTablePropertyString($table)
+  public function buildTableDefinitionString($model)
   {
-    $options = array(
-      'name' => '',
-      'tableName' => '',
-      'sequenceName' => '',
-      'inheritanceMap' => '',
-      'enumMap' => '',
-      'type' => '',
-      'charset' => '',
-      'collate' => '',
-      'treeImpl' => '',
-      'treeOptions' => '',
-      'indexes' => '',
-      'parents' => '',
-      'joinedParents' => '',
-      'queryParts' => '',
-      'versioning' => '',
-      'subclasses' => '',
-      'orderBy' => '',
-    );
+    $definitionCode = $this->extractMethodString(new ReflectionMethod($model, 'setTableDefinition'));
+    $setUpCode = $this->extractMethodString(new ReflectionMethod($model, 'setUp'));
 
-    // opDoctrineRecord::hasColumn
-    $fieldNames = array();
-    $columnNames = array();
-    foreach ($table->getColumnNames() as $columnName)
-    {
-      $fieldName = $table->getFieldName($columnName);
-      $fieldNames[$columnName] = $fieldName;
-      $columnNames[$fieldName] = $columnName;
-    }
-    $columns = $table->getColumns();
-    $identifiers = (array)$table->getIdentifier();
-    $hasDefaultValues = $table->hasDefaultValues();
+    $definitionCode = str_replace('$this->', '$this->definition->', $definitionCode);
+    $setUpCode = str_replace('$this->', '$this->definition->', $setUpCode);
 
-    foreach ($options as $key => $value)
-    {
-      $options[$key] = $table->getOption($key);
-    }
-
-    $string = 'protected $_columnNames = '.var_export($columnNames, true).';'.PHP_EOL
-            . 'protected $_fieldNames = '.var_export($fieldNames, true).';'.PHP_EOL
-            . 'protected $_columns = '.var_export($columns, true).';'.PHP_EOL
-            . 'protected $_identifier = '.var_export($identifiers, true).';'.PHP_EOL
-            . 'protected $hasDefaultValues = '.var_export($hasDefaultValues, true).';'.PHP_EOL
-            . 'protected $_options = '.var_export($options, true).';'.PHP_EOL
-    ;
+    $string = $definitionCode.PHP_EOL.$setUpCode;
 
     return $string;
+  }
+
+  public function extractMethodString($reflectionMethod)
+  {
+    $start = $reflectionMethod->getStartLine() - 1;
+    $end = $reflectionMethod->getEndLine();
+
+    $lines = array_slice(file($reflectionMethod->getFileName()), $start, ($end - $start));
+
+    return implode('', $lines);
   }
 }

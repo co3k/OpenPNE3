@@ -50,6 +50,7 @@ class opProjectConfiguration extends sfProjectConfiguration
     ));
 
     $this->dispatcher->connect('command.pre_command', array(__CLASS__, 'listenToPreCommandEvent'));
+    $this->dispatcher->connect('command.post_command', array($this, 'generateBaseDoctrineTable'));
     $this->dispatcher->connect('doctrine.filter_cli_config', array(__CLASS__, 'filterDoctrineCliConfig'));
 
     $this->setupProjectOpenPNE();
@@ -163,5 +164,20 @@ class opProjectConfiguration extends sfProjectConfiguration
     $config['migrations_path'] = sfConfig::get('sf_data_dir').'/migrations/generated';
 
     return $config;
+  }
+
+  public function generateBaseDoctrineTable(sfEvent $event)
+  {
+    if ($event->getSubject() instanceof sfDoctrineBuildModelTask)
+    {
+      $config = $event->getSubject()->getCliConfig();
+      $baseTablePath = $config['models_path'].'/baseTable/';
+      $event->getSubject()->getFileSystem()->mkdirs($baseTablePath);
+
+      $models = sfFinder::type('file')->name('Base*.php')->prune('baseTable')->in($config['models_path']);
+      foreach ($models as $model)
+      {
+      }
+    }
   }
 }

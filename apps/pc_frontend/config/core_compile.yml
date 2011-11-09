@@ -159,4 +159,5 @@
 - %SF_LIB_DIR%/controller/opPcFrontWebController.class.php
 
 # experimental
-- %SF_LIB_DIR%/util/opDoctrineSimpleRecord.class.php
+- %SF_LIB_DIR%/util/opDoctrineDefinitionRecord.class.php
+- %SF_LIB_DIR%/util/opDoctrineBaseCompiledTable.class.php
