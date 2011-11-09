@@ -1,6 +1,6 @@
 <?php
 
-class GadgetMapper
+class GadgetMapper extends opDoctrineSimpleRecord
 {
   protected $list = null;
 

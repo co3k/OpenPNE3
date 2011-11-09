@@ -157,3 +157,6 @@
 #
 # pc_frontend
 - %SF_LIB_DIR%/controller/opPcFrontWebController.class.php
+
+# experimental
+- %SF_LIB_DIR%/util/opDoctrineSimpleRecord.class.php

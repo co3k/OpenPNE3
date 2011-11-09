@@ -861,3 +861,74 @@ Doctrine_Core::getTable() にかかるメモリは 11,037,760 Bytes から 10,76
 あー……プロパティに書きだしたぶん、初期化コストが微増したわけだな（改善したファイルもあるけど）。すべて静的に定義するよりランタイムで定義した方がいいケースもあるのか、そりゃそうか。メソッドコールがないぶん若干速くはなっているけどそこは今回目指しているものじゃない。
 
 じゃあ頑張ってベースクラスを取り除くってことをやってみるかなー。とりあえず無効化しているけどコンパイル結果ちょこちょこいじるやつはコミットしておく。
+
+2011/11/09 - 1
+==============
+
+ちょっと視点を変えることにする。最初にやった、「シンプルなオブジェクトにすげ替える」案を真面目にやろう。
+
+具体的には、「テーブルの初期化にはレコードクラスではなくシンプルなオブジェクトを使う」ようにし、「レコードクラスが初期化されるような事態は極力避ける」。レコードクラスが初期化されて以降なら、よほど大量のレコードを作らない限り、レコードクラスのインスタンスに費やすメモリはたいしたことがないはずなので、そういう場面では無理せずレコードクラスを使う。
+
+で、この間追加したような「シンプルなオブジェクト」はいちいち用意していくのがウザいと思うので、その負担を減らす努力はやってみる。試しに opDoctrineSimpleRecord なるものを作って、そいつに Doctrine_Record_Abstract を継承させ、テーブル初期化に関する処理は今までと同じものを使うようにする。そして opDoctrineSimpleRecord を先の「シンプルなレコード」に継承させ、どれだけ初期化コストが増大するか。
+
+まず現状の全体のコスト::
+
+    Total Incl. Wall Time (microsec):   1,696,281 microsecs
+    Total Incl. CPU (microsecs):    1,651,271 microsecs
+    Total Incl. MemUse (bytes): 34,944,320 bytes
+    Total Incl. PeakMemUse (bytes): 35,096,384 bytes
+    Number of Function Calls:   147,211
+
+各「シンプルなオブジェクト」の load コスト (アルファベット昇順)::
+
+    Function Name                         Calls Calls%  IWallT IWall% EWallT EWall% ICPU ICpu% ECPU ECPU% IMemUse IMemUse% EMemUse EMemUse% IPeakMemUse IPeakMemUse% EPeakMemUse EPeakMemUse%
+    load::mapper/GadgetMapper.class.php     1   0.0%    56     0.0%   56     0.0%   59   0.0%  59   0.0%  10,384  0.0%     10,384  0.0%     5,232       0.0%         5,232       0.0%
+    load::mapper/MemberConfigMapper.php     1   0.0%    70     0.0%   70     0.0%   72   0.0%  72   0.0%  11,808  0.0%     11,808  0.0%     7,448       0.0%         7,448       0.0%
+    load::mapper/SnsConfigMapper.class.php  1   0.0%    56     0.0%   56     0.0%   59   0.0%  59   0.0%  6,688   0.0%     6,688   0.0%     5,552       0.0%         5,552       0.0%
+    load::mapper/SnsTermMapper.php          1   0.0%    104    0.0%   104    0.0%   107  0.0%  107  0.0%  11,384  0.0%     11,384  0.0%     6,472       0.0%         6,472       0.0%
+
+各「シンプルなオブジェクト」の run_init コスト (アルファベット昇順)::
+
+    Function Name                               Calls Calls%  IWallT IWall% EWallT EWall% ICPU ICpu% ECPU ECPU% IMemUse IMemUse% EMemUse EMemUse% IPeakMemUse IPeakMemUse% EPeakMemUse EPeakMemUse%
+    run_init::mapper/GadgetMapper.class.php     1     0.0%    5      0.0%   5      0.0%   7    0.0%  7    0.0%  1,120   0.0%     1,120   0.0%     1,000       0.0%         1,000       0.0%
+    run_init::mapper/MemberConfigMapper.php     1     0.0%    5      0.0%   5      0.0%   7    0.0%  7    0.0%  1,120   0.0%     1,120   0.0%     888         0.0%         888         0.0%
+    run_init::mapper/SnsConfigMapper.class.php  1     0.0%    5      0.0%   5      0.0%   12   0.0%  12   0.0%  1,128   0.0%     1,128   0.0%     1,128       0.0%         1,128       0.0%
+    run_init::mapper/SnsTermMapper.php          1     0.0%    7      0.0%   7      0.0%   15   0.0%  15   0.0%  1,120   0.0%     1,120   0.0%     920         0.0%         920         0.0%
+
+で、これらの各クラスに opDoctrineSimpleRecord を継承させ、どの程度コストが増大するかを確認する::
+
+    Overall Summary
+    Total Incl. Wall Time (microsec):   1,789,501 microsecs
+    Total Incl. CPU (microsecs):    1,616,544 microsecs
+    Total Incl. MemUse (bytes): 35,110,432 bytes
+    Total Incl. PeakMemUse (bytes): 35,261,792 bytes
+    Number of Function Calls:   147,372
+
+やや増えた。この増加分に APC のキャッシュミスの影響はないと思われ。
+
+各「シンプルなオブジェクト」の load コスト (アルファベット昇順)::
+
+    Function Name                         Calls Calls%  IWallT IWall% EWallT EWall% ICPU ICpu% ECPU ECPU% IMemUse IMemUse% EMemUse EMemUse% IPeakMemUse IPeakMemUse% EPeakMemUse EPeakMemUse%
+    load::mapper/GadgetMapper.class.php     1   0.0%    74     0.0%   74     0.0%   76   0.0%  76   0.0%  31,248  0.1%     31,248  0.1%     25,408      0.1%         25,408      0.1%
+    load::mapper/MemberConfigMapper.php     1   0.0%    102    0.0%   102    0.0%   104  0.0%  104  0.0%  32,672  0.1%     32,672  0.1%     26,928      0.1%         26,928      0.1%
+    load::mapper/SnsConfigMapper.class.php  1   0.0%    38     0.0%   38     0.0%   40   0.0%  40   0.0%  6,688   0.0%     6,688   0.0%     5,552       0.0%         5,552       0.0%
+    load::mapper/SnsTermMapper.php          1   0.0%    114    0.0%   114    0.0%   117  0.0%  117  0.0%  32,312  0.1%     32,312  0.1%     26,312      0.1%         26,312      0.1%
+
+各「シンプルなオブジェクト」の run_init コスト (アルファベット昇順)::
+
+    Function Name                               Calls Calls%  IWallT IWall% EWallT EWall% ICPU ICpu% ECPU ECPU% IMemUse IMemUse% EMemUse EMemUse% IPeakMemUse IPeakMemUse% EPeakMemUse EPeakMemUse%
+    run_init::mapper/GadgetMapper.class.php     1     0.0%    5      0.0%   5      0.0%   6    0.0%  6    0.0%  1,120   0.0%     1,120   0.0%     1,000       0.0%         1,000       0.0%
+    run_init::mapper/MemberConfigMapper.php     1     0.0%    5      0.0%   5      0.0%   8    0.0%  8    0.0%  1,120   0.0%     1,120   0.0%     888         0.0%         888         0.0%
+    run_init::mapper/SnsConfigMapper.class.php  1     0.0%    224    0.0%   62     0.0%   226  0.0%  59   0.0%  57,224  0.2%     22,600  0.1%     53,592      0.2%         22,000      0.1%
+    run_init::mapper/SnsTermMapper.php          1     0.0%    5      0.0%   5      0.0%   7    0.0%  7    0.0%  1,120   0.0%     1,120   0.0%     920         0.0%         920         0.0%
+
+SnsConfigMapper の run_init コストが増大しているのはなぜだろう。 __call() があるからかな……
+
+まあ、しかし、これくらいの増加量なら、レコードクラスをこの形式のクラスに置き換えても問題なさそうだな。問題になるのはレコードクラスとこの形式のクラスを併用するシチュエーション（初期化コストが両方のクラス分かかる）だけれども、トータルで見たらパフォーマンスは改善するはず。ここまで予測が立てば踏み切れるな。
+
+ということで、
+
+* テーブルの初期化コストがレコードクラスのせいで増大しているので、テーブルの初期化にレコードクラスを使わないよう書き換える
+* 可能な限りレコードクラスにハイドレートするのではなく、今回のシンプルなレコードにハイドレートするように置き換える
+
+という感じで改善していく。これが終わったらこの作業一段落つけるかな。

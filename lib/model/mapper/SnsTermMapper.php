@@ -1,6 +1,6 @@
 <?php
 
-class SnsTermMapper
+class SnsTermMapper extends opDoctrineSimpleRecord
 {
   protected $process = array(
     'withArticle' => false,

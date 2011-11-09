@@ -1,6 +1,6 @@
 <?php
 
-class MemberConfigMapper
+class MemberConfigMapper extends opDoctrineSimpleRecord
 {
 
   protected  $id, $member_id, $name, $value, $value_datetime, $name_value_hash, $Member;

@@ -1,6 +1,6 @@
 <?php
 
-class SnsConfigMapper
+class SnsConfigMapper extends opDoctrineSimpleRecord
 {
   protected static $snsConfigSettings = array();
 
