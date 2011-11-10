@@ -1,42 +1,18 @@
 <?php
 
-class opDoctrineSimpleRecord extends Doctrine_Record_Abstract
+class opDoctrineSimpleRecord extends ArrayObject
 {
-  protected $data = array();
+  protected $modelName;
 
-  // copied from opDoctrineRecord
-  public function setTableName($tableName)
+  public function __construct($input = array(), $modelName = null)
   {
-    if (sfConfig::get('op_table_prefix'))
-    {
-      $tableName = sfConfig::get('op_table_prefix').$tableName;
-    }
+    $this->modelName = $modelName;
 
-    parent::setTableName($tableName);
+    parent::__construct($input, self::STD_PROP_LIST | self::ARRAY_AS_PROPS);
   }
 
-  public function get($offset)
+  public function getTable()
   {
-    if (!$this->contains($offset))
-    {
-      return null;
-    }
-
-    return $this->data[$offset];
-  }
-
-  public function set($offset, $value)
-  {
-    $this->data[$offset] = $value;
-  }
-
-  public function contains($offset)
-  {
-    return isset($this->data[$offset]);
-  }
-
-  public function remove($offset)
-  {
-    unset($this->data[$offset]);
+    return Doctrine_Core::getTable($modelName);
   }
 }

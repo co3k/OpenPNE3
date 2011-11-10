@@ -2,20 +2,6 @@
 
 class MemberConfigMapper extends opDoctrineSimpleRecord
 {
-
-  protected  $id, $member_id, $name, $value, $value_datetime, $name_value_hash, $Member;
-
-  public function __construct($data)
-  {
-    $delimitor = '__';
-
-    foreach ($data as $key => $value)
-    {
-        $field = substr($key, strpos($key, $delimitor) + strlen($delimitor));
-        $this->$field = $value;
-    }
-  }
-
   public function getValue()
   {
     if ($this->value_datetime)

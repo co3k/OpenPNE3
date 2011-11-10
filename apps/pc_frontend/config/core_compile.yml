@@ -51,6 +51,7 @@
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Hydrator/Abstract.php
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Hydrator/Graph.php
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Hydrator/RecordDriver.php
+- %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Hydrator/ArrayDriver.php
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Record/Abstract.php
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Record.php
 - %SF_SYMFONY_LIB_DIR%/plugins/sfDoctrinePlugin/lib/vendor/doctrine/Doctrine/Record/Filter.php

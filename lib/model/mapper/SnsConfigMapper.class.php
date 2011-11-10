@@ -4,23 +4,6 @@ class SnsConfigMapper extends opDoctrineSimpleRecord
 {
   protected static $snsConfigSettings = array();
 
-  public $name, $value;
-
-  public function __construct($data)
-  {
-    $delimitor = '__';
-
-    foreach ($data as $key => $value)
-    {
-        $field = substr($key, strpos($key, $delimitor) + strlen($delimitor));
-        $this->$field = $value;
-    }
-
-    if (!self::$snsConfigSettings) {
-        self::$snsConfigSettings = sfConfig::get('openpne_sns_config');
-    }
-  }
-
   public function getConfig()
   {
     $name = $this->name;

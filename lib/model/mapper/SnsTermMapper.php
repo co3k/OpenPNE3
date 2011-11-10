@@ -2,35 +2,14 @@
 
 class SnsTermMapper extends opDoctrineSimpleRecord
 {
+  protected $lang = 'ja_JP';  // ごめん、これどこで定義されるんだっけ
+
   protected $process = array(
     'withArticle' => false,
     'pluralize' => false,
     'fronting' => false,
     'titleize' => false,
   );
-
-  public $lang;
-  public $id;
-  public $name;
-  public $application;
-  public $value;
-
-  public $Translation = array();
-
-  public function __construct($data)
-  {
-    $delimitor = '__';
-
-    foreach ($data as $key => $value)
-    {
-        $field = substr($key, strpos($key, $delimitor) + strlen($delimitor));
-        $this->$field = $value;
-    }
-
-    $this->Translation[$this->lang] = array(
-        'value' => $value,
-    );
-  }
 
   public function doFronting($string)
   {
