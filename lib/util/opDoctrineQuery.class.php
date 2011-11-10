@@ -354,6 +354,14 @@ class opDoctrineQuery extends Doctrine_Query
     foreach ($results as $alias => $component)
     {
       $table = $component['table'];
+      if (get_class($table) === 'Doctrine_Table')
+      {
+        // TODO: テンプレートでコールバックを追加しているようなやつをどうにか考慮する必要があるはず。いまの OpenPNE は使ってないけど
+        unset($results[$alias]);
+
+        continue;
+      }
+
       if (!($table instanceof opDoctrineBaseCompiledTable))
       {
         continue;

@@ -1192,3 +1192,14 @@ opDoctrineSimpleRecord は ArrayObject しか継承しないのでいろいろ�
     Number of Function Calls:   143,858
 
 はいはいー。
+
+2011/11/10 - 5
+==============
+
+ごめんどうしても気になったんで翻訳テーブルのクエリ発行しようとしたときに存在しない DQL のコールバックメソッドをコールしようとしているのを強引に回避してしまった::
+
+    Total Incl. Wall Time (microsec):   2,564,485 microsecs
+    Total Incl. CPU (microsecs):    1,547,988 microsecs
+    Total Incl. MemUse (bytes): 32,799,976 bytes
+    Total Incl. PeakMemUse (bytes): 32,954,704 bytes
+    Number of Function Calls:   143,882
