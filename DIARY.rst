@@ -1016,3 +1016,70 @@ Doctrine_Query_Abstract::_preQuery() のコストは 1,954,088 Bytes にまで�
 * レコードインスタンスを初期化したときのコストをコンパイルで減らす
 
 この二つをやれば 30MB とはいかないまでも 32MB は行くんじゃないかな。とりあえず今日はいい加減帰る。
+
+2011/11/10 - 1
+==============
+
+あと 1 時間半で 32 MB 、できれば 30 MB まで持って行きたい。明日アグレッシブすぎるやつ慣らして 2MB くらい増えちゃうけどとりあえず完了くらいの勢いで。
+
+ということで Doctrine_Hydrator_Graph::hydrateResultSet() 見たけど、 Doctrine_Hydrator_ArrayDriver と Doctrine_Hydrator_RecordDriver の時しか使わないのでこの初期化は妥当だと思う。 Doctrine_Hydrator_ArrayDriver はあんまり興味ないや（え、ダメ？）。
+
+とりあえずホーム画面で (無駄に) HYDRATE_ARRAY してたのは opBlogPlugin なのでそれを潰した::
+
+    diff --git a/lib/model/doctrine/PluginBlogRssCacheTable.class.php b/lib/model/doctrine/PluginBlogRssCacheTable.class.php
+    index c76e0f0..5782c14 100644
+    --- a/lib/model/doctrine/PluginBlogRssCacheTable.class.php
+    +++ b/lib/model/doctrine/PluginBlogRssCacheTable.class.php
+    @@ -87,15 +87,15 @@ class PluginBlogRssCacheTable extends Doctrine_Table
+       public function getAccessBlockedFriendMemberIds($memberId)
+       {
+         $relationList = Doctrine::getTable('MemberRelationship')->createQuery()
+    -      ->select('member_id_from AS id')
+    +      ->select('member_id_from')
+           ->where('member_id_to = ?', $memberId)
+           ->andWhere('is_access_block = ?', true)
+    -      ->execute(array(), Doctrine::HYDRATE_ARRAY);
+    +      ->execute(array(), Doctrine::HYDRATE_NONE);
+     
+         $memberIds = array();
+         foreach ($relationList as $relation)
+         {
+    -      $memberIds[] = $relation['id'];
+    +      $memberIds[] = $relation[0];
+         }
+         return $memberIds;
+       }
+
+で、結果::
+
+    Overall Summary
+    Total Incl. Wall Time (microsec):   1,641,437 microsecs
+    Total Incl. CPU (microsecs):    1,567,977 microsecs
+    Total Incl. MemUse (bytes): 33,993,880 bytes
+    Total Incl. PeakMemUse (bytes): 34,145,560 bytes
+    Number of Function Calls:   145,906
+
+まあこんなところだねー。
+
+ということで、もう無駄にレコードインスタンス初期化してるところはないんじゃないかなあ。でも getRecordInstance() だけが初期化するとも限らないしなあ。
+
+つーことで Doctrine_Record::__construct() をコールしているメソッドのリストを出した。
+
+* Doctrine_Table::getRecord() : 599,312 Bytes
+* Doctrine_Table::getRecordInstance() : 4,825,112 Bytes
+* opMemberAction::preExecute() : 504,952 Bytes
+
+はい疑ってすいませんでした！
+
+つーことで、とりあえずレコードクラスのコンパイルを復活させるか……もうちょっとレコードクラスの無駄遣い減らせると思うのだけれど。
+
+で、コンパイルを復活させた::
+
+    Overall Summary
+    Total Incl. Wall Time (microsec):   1,671,886 microsecs
+    Total Incl. CPU (microsecs):    1,564,854 microsecs
+    Total Incl. MemUse (bytes): 33,837,456 bytes
+    Total Incl. PeakMemUse (bytes): 33,988,824 bytes
+    Number of Function Calls:   145,620
+
+あ、うん、改善したけど、うーんホントにこんなもんか？

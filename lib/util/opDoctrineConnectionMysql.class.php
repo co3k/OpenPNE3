@@ -110,7 +110,7 @@ class opDoctrineConnectionMysql extends Doctrine_Connection_Mysql_ExtraFunctions
         return $this->tables[$name];
     }
 
-    $pathToCompiled = sfConfig::get('sf_lib_dir').'/model/compiled/'.$name.'.compiled.php';
+    $pathToCompiled = sfConfig::get('sf_lib_dir').'/model/compiled/'.$name.'Table.compiled.php';
     if (is_file($pathToCompiled))
     {
         require_once $pathToCompiled;

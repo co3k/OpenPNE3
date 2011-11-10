@@ -48,32 +48,35 @@ EOF;
     $definitions = sfYaml::load($schema);
     foreach ($definitions as $modelName => $definition)
     {
-      $content = $this->getCompiledModelFile($modelName, $definition, isset($definition['package_custom_path']) ? $definition['package_custom_path'] : null);
-      file_put_contents($dir.$modelName.'.compiled.php', $content);
+      $basePath = isset($definition['package_custom_path']) ? $definition['package_custom_path'] : $this->getPathToCoreBaseModel();
+      $isAbstract = !empty($definition['abstract']);
+      $isPluginModel = ($basePath !== $this->getPathToCoreBaseModel());
+
+      $content = $this->getCompiledTableFile($modelName, $definition, $basePath, $isAbstract, $isPluginModel);
+      file_put_contents($dir.$modelName.'Table.compiled.php', $content);
+
+      $content = $this->getCompiledRecordFile($modelName, $definition, $basePath, $isAbstract, $isPluginModel);
+      file_put_contents($dir.$modelName.'Record.compiled.php', $content);
     }
   }
 
-  protected function getCompiledModelFile($modelName, $definition, $basePath = null)
+  protected function getPathToCoreBaseModel()
   {
-    $coreBasePath = sfConfig::get('sf_lib_dir').'/model/doctrine';
-    if (!$basePath)
-    {
-      $basePath = $coreBasePath;
-    }
-    $isPluginModel = ($basePath !== $coreBasePath);
-    $isAbstract = !empty($definition['abstract']);
+    return sfConfig::get('sf_lib_dir').'/model/doctrine';
+  }
 
+  protected function getCompiledRecordFile($modelName, $definition, $basePath, $isAbstract, $isPluginModel)
+  {
     if ($isPluginModel)
     {
       $classes = array(
-        /*'Base'.$modelName, 'Plugin'.$modelName, $modelName, */
-        'Plugin'.$modelName.'Table', $modelName.'Table',
+        'Base'.$modelName, 'Plugin'.$modelName, $modelName,
       );
     }
     else
     {
       $classes = array(
-        /*'Base'.$modelName, $modelName,*/ $modelName.'Table',
+        'Base'.$modelName, $modelName,
       );
     }
 
@@ -87,10 +90,41 @@ EOF;
         continue;
       }
 
-      $start = $r->getStartLine() - 1;
-      $end = $r->getEndLine();
+      $lines = $this->extractClassDefinitionArrayOfStrings($r);
+      $results[] = sprintf('if (!class_exists(\'%s\', false)) {', $class);
+      $results = array_merge($results, $lines);
+      $results[] = '}';
+    }
 
-      $lines = array_slice(file($r->getFileName()), $start, ($end - $start));
+    return sfToolkit::stripComments('<?php '.implode('', $results));
+  }
+
+  protected function getCompiledTableFile($modelName, $definition, $basePath, $isAbstract, $isPluginModel)
+  {
+    if ($isPluginModel)
+    {
+      $classes = array(
+        'Plugin'.$modelName.'Table', $modelName.'Table',
+      );
+    }
+    else
+    {
+      $classes = array(
+        $modelName.'Table',
+      );
+    }
+
+    $results = array();
+
+    foreach ($classes as $class)
+    {
+      $r = new ReflectionClass($class);
+      if (!$r)
+      {
+        continue;
+      }
+
+      $lines = $this->extractClassDefinitionArrayOfStrings($r);
 
       // append constructors for performance
       if (!$isAbstract && $modelName.'Table' === $class)
@@ -109,7 +143,7 @@ EOF;
       $results[] = '}';
     }
 
-    $content = sfToolkit::stripComments('<?php '.implode(PHP_EOL, $results));
+    $content = sfToolkit::stripComments('<?php '.implode('', $results));
     if (!$isAbstract && $modelName.'Table' === $class)
     {
       $content = str_replace('extends Doctrine_Table', 'extends opDoctrineBaseCompiledTable', $content);
@@ -134,6 +168,14 @@ EOF;
     $string = $definitionCode.PHP_EOL.$setUpCode;
 
     return $string;
+  }
+
+  public function extractClassDefinitionArrayOfStrings($reflectionClass)
+  {
+    $start = $reflectionClass->getStartLine() - 1;
+    $end = $reflectionClass->getEndLine();
+
+    return array_slice(file($reflectionClass->getFileName()), $start, ($end - $start));
   }
 
   public function extractMethodString($reflectionMethod)

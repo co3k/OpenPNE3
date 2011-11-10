@@ -64,4 +64,18 @@ abstract class opDoctrineBaseCompiledTable extends Doctrine_Table
       $this->setTableName(Doctrine_Inflector::tableize($name));
     }
   }
+
+  public function getRecordInstance()
+  {
+    if (!class_exists($this->_options['name'], false))
+    {
+      $pathToCompiled = sfConfig::get('sf_lib_dir').'/model/compiled/'.$this->_options['name'].'Record.compiled.php';
+      if (is_file($pathToCompiled))
+      {
+        require_once $pathToCompiled;
+      }
+    }
+
+    return parent::getRecordInstance();
+  }
 }
