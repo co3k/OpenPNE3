@@ -68,14 +68,14 @@ class MemberProfileTable extends opAccessControlDoctrineTable
     return $profiles;
   }
 
-  public function getViewableProfileByMemberIdAndProfileName($memberId, $profileName, $myMemberId = null)
+  public function getViewableProfileByMemberIdAndProfileName($memberId, $profileName, $myMemberId = null, $hydrationMode = Doctrine::HYDRATE_RECORD)
   {
     if (is_null($myMemberId))
     {
       $myMemberId = sfContext::getInstance()->getUser()->getMemberId();
     }
 
-    $profile = $this->retrieveByMemberIdAndProfileName($memberId, $profileName);
+    $profile = $this->retrieveByMemberIdAndProfileName($memberId, $profileName, $hydrationMode);
 
     if ($profile && $profile->isViewable($myMemberId))
     {

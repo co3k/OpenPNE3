@@ -1115,3 +1115,80 @@ opDoctrineSimpleRecord は ArrayObject しか継承しないのでいろいろ�
     Number of Function Calls:   146,005
 
 よかったーこれでコストがめっちゃ増えたらどうしようかと思った。
+
+2011/11/10 - 4
+==============
+
+さて opDoctrineSimpleRecord への書き換えを一個やって終わりにしようかなーと思っていろいろ見ていると applicationComponents::executeCautionAboutApplicationInvite() でメモリ喰っていることがわかり、おおこれは置き換えやすそう！　と思ったら無駄に Doctrine_Collection::count() 呼んでましたという巻。まあ見つけてしまったからには改善します。以下のパッチを適用::
+
+    diff --git a/apps/mobile_frontend/modules/application/actions/components.class.php b/apps/mobile_frontend/modules/application/actions/components.class.php
+    index 9744e62..8aa3fc4 100644
+    --- a/apps/mobile_frontend/modules/application/actions/components.class.php
+    +++ b/apps/mobile_frontend/modules/application/actions/components.class.php
+    @@ -24,6 +24,6 @@ class applicationComponents extends sfComponents
+       */
+       public function executeCautionAboutApplicationInvite(sfWebRequest $request)
+       {
+    -    $this->count = Doctrine::getTable('ApplicationInvite')->getInvitesByToMemberId(null, null, true)->count();
+    +    $this->count = Doctrine::getTable('ApplicationInvite')->getInvitesByToMemberIdQuery(null, null, true)->count();
+       }
+     }
+    diff --git a/apps/pc_frontend/modules/application/actions/components.class.php b/apps/pc_frontend/modules/application/actions/components.class.php
+    index 1678bbb..f82027e 100644
+    --- a/apps/pc_frontend/modules/application/actions/components.class.php
+    +++ b/apps/pc_frontend/modules/application/actions/components.class.php
+    @@ -127,6 +127,6 @@ class applicationComponents extends sfComponents
+       */
+       public function executeCautionAboutApplicationInvite(sfWebRequest $request)
+       {
+    -    $this->count = Doctrine::getTable('ApplicationInvite')->getInvitesByToMemberId(null, true)->count();
+    +    $this->count = Doctrine::getTable('ApplicationInvite')->getInvitesByToMemberIdQuery(null, null, true)->count();
+       }
+     }
+    diff --git a/lib/model/doctrine/PluginApplicationInviteTable.class.php b/lib/model/doctrine/PluginApplicationInviteTable.class.php
+    index 0599a51..faec6af 100644
+    --- a/lib/model/doctrine/PluginApplicationInviteTable.class.php
+    +++ b/lib/model/doctrine/PluginApplicationInviteTable.class.php
+    @@ -17,7 +17,7 @@
+      */
+     class PluginApplicationInviteTable extends Doctrine_Table
+     {
+    -  public function getInvitesByToMemberId($memberId = null, $isPc = null, $isMobile = null)
+    +  public function getInvitesByToMemberIdQuery($memberId = null, $isPc = null, $isMobile = null)
+       {
+         if (null === $memberId)
+         {
+    @@ -42,7 +42,12 @@ class PluginApplicationInviteTable extends Doctrine_Table
+           $query->andWhere('a.is_mobile = ?', $isMobile);
+         }
+     
+    -    return $query->execute();
+    +    return $query;
+    +  }
+    +
+    +  public function getInvitesByToMemberId($memberId = null, $isPc = null, $isMobile = null)
+    +  {
+    +    return $this->getInvitesByToMemberIdQuery($memberId, $isPc, $isMobile)->execute();
+       }
+     
+       public function inviteApplicationList(sfEvent $event)
+
+これで、こうなる::
+
+    Total Incl. Wall Time (microsec):   1,641,672 microsecs
+    Total Incl. CPU (microsecs):    1,581,382 microsecs
+    Total Incl. MemUse (bytes): 33,506,304 bytes
+    Total Incl. PeakMemUse (bytes): 33,661,664 bytes
+    Number of Function Calls:   147,500
+
+あれ？　想像していたよりも減ってないな……と思って見てみると Doctrine_Query::count() で 842,904 Bytes とか喰っててげんなり。コールバックとかでレコードインスタンス呼び寄せてんのかなー。とりあえず後回し……
+
+で、他に改善できそうなやつある？　ってことで opMemberComponents::executeBirthdayBox() に白羽の矢が立った。こいつは MemberProfile 呼んでて、ちょっと複雑だからやりたくなかったんだけど、ここでは単に isViewable() 呼びたいだけっぽいからうまくできそうな気がした。で、普通にロジックコピペして置き換えた::
+
+    Total Incl. Wall Time (microsec):   1,670,080 microsecs
+    Total Incl. CPU (microsecs):    1,558,141 microsecs
+    Total Incl. MemUse (bytes): 32,814,200 bytes
+    Total Incl. PeakMemUse (bytes): 32,969,096 bytes
+    Number of Function Calls:   143,858
+
+はいはいー。
