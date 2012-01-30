@@ -1,7 +1,7 @@
 <?php
 
-if (!dl('php_azure')) {
-    echo 'Failed to load php_azure.dll.'.PHP_EOL;
+if (!function_exists('azure_getconfig')) {
+    echo 'Please install php_azure.dll before executing this script.'.PHP_EOL;
 
     exit(1);
 }
