@@ -28,6 +28,8 @@ IF ERRORLEVEL 1 (
     "%RoleRoot%\bin\azure\php\php.exe" symfony doctrine:build --all-classes --no-confirmation >>bin/azure/log.txt 2>>bin/azure/err.txt
 )
 
+"%RoleRoot%\bin\azure\php\php.exe" bin/azure/quickFixForeignKey.php
+
 "%RoleRoot%\bin\azure\php\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
 
 ECHO "Completed OpenPNE Installation" >> bin/azure/log.txt
