@@ -1,0 +1,15 @@
+=========================================================================
+==  NOTICE file for use with the Apache License, Version 2.0,          ==
+==  in this case for the OpenPNE3 Azure distribution.                  ==
+=========================================================================
+
+(See also NOTICE)
+
+OpenPNE3
+Copyright 2005-2009 OpenPNE Project
+
+This product includes also softwares developed by :
+  - RealDolmen (http://phpazure.codeplex.com/)
+
+This product includes dependent libraries listed blow:
+  - Windows Azure SDK for PHP (partly)
