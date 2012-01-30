@@ -15,18 +15,11 @@ reg add "hku\.default\software\microsoft\windows\currentversion\explorer\user sh
 reg add "hku\.default\software\microsoft\windows\currentversion\explorer\user shell folders" /v "Local AppData" /t REG_EXPAND_SZ /d %%USERPROFILE%%\AppData\Local /f
 
 copy "..\php_azure.dll" "%ProgramFiles(x86)%\php\v5.3\ext"
-copy "..\php_apc.dll" "%ProgramFiles(x86)%\php\v5.3\ext"
 
 find "extension=php_azure.dll" "%ProgramFiles(x86)%\php\v5.3\php.ini"
 IF ERRORLEVEL 1 (
     ECHO "" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
     ECHO "extension=php_azure.dll" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
-)
-
-find "extension=php_apc.dll" "%ProgramFiles(x86)%\php\v5.3\php.ini"
-IF ERRORLEVEL 1 (
-    ECHO "" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
-    ECHO "extension=php_apc.dll" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
 )
 
 cd ".."
