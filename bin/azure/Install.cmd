@@ -24,6 +24,10 @@ IF ERRORLEVEL 1 (
 
 cd ".."
 
+md cache
+
+copy config\ProjectConfiguration.class.php.sample config\ProjectConfiguration.class.php
+
 icacls %RoleRoot%\approot /grant "Everyone":F /T
 %WINDIR%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /-"[fullPath='%ProgramFiles(x86)%\PHP\v5.3\php-cgi.exe'].environmentVariables.[name='RoleDeploymentID']" /commit:apphost
 %WINDIR%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%ProgramFiles(x86)%\PHP\v5.3\php-cgi.exe'].environmentVariables.[name='RoleDeploymentID',value='%RoleDeploymentID%']" /commit:apphost
