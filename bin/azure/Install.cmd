@@ -18,8 +18,8 @@ copy "..\php_azure.dll" "%ProgramFiles(x86)%\php\v5.3\ext"
 
 find "extension=php_azure.dll" "%ProgramFiles(x86)%\php\v5.3\php.ini"
 IF ERRORLEVEL 1 (
-    ECHO "" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
-    ECHO "extension=php_azure.dll" >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
+    ECHO ; >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
+    ECHO extension=php_azure.dll >> "%ProgramFiles(x86)%\php\v5.3\php.ini"
 )
 
 cd ".."
@@ -33,6 +33,10 @@ icacls %RoleRoot%\approot /grant "Everyone":F /T
 %WINDIR%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%ProgramFiles(x86)%\PHP\v5.3\php-cgi.exe'].environmentVariables.[name='AZURE_ROLE_ROOT',value='%RoleRoot%']" /commit:apphost
 
 ECHO "Completed PHP Installation" >> log.txt
+
+REM avoid https://bugs.php.net/bug.php?id=60758
+
+ECHO /**/ >> lib/vendor/symfony/lib/config/sfDefineEnvironmentConfigHandler.class.php
 
 "%ProgramFiles(x86)%\php\v5.3\php.exe" -m >> log.txt
 
