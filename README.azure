@@ -78,12 +78,6 @@ Windows Azure 版では、通常の OpenPNE 3 に存在する以下の機能が�
 (開発者向け) Azure 版パッケージ作成手順
 =======================================
 
-bin/azure/php に、 http://windows.php.net/ から得られる PHP のパッケージの展開ディレクトリを設置し、 Azure 環境向けに php.ini や拡張モジュールのセットアップをおこなってください。
-
-なお、 2012/01/30 現在の OpenPNE3.cspkg に同梱される PHP は、 PHP 5.3.8 に http://svn.php.net/viewvc?view=revision&revision=321038 から入手できる差分（CVE-2011-4885 への対応）を適用したものとなります。これは、（おそらく PHP 5.3.9 に存在するバグによって） sfDefineEnvironmentConfigHandler の読み込み時にクラッシュしてしまう問題への回避策です。
-
-OpenPNE 3 は php_azure.dll に依存しています。 http://phpazure.codeplex.com/ から最新の php_azure.dll を入手し、 ext ディレクトリにインストールしたのち、 php.ini でこの拡張を必ず有効にしてください。
-
 zip 圧縮のソースディレクトリ内で、以下のコマンドを実行してください::
 
     cspack.exe \Path\To\OpenPNE\ServiceDefinition.csdef /role:WebRole;\Path\To\OpenPNE /out:OpenPNE3.cspkg
