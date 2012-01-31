@@ -78,12 +78,20 @@ Windows Azure 版では、通常の OpenPNE 3 に存在する以下の機能が�
 (開発者向け) Azure 版パッケージ作成手順
 =======================================
 
-zip 圧縮のソースディレクトリ内で、以下のコマンドを実行してください::
+http://go.microsoft.com/?linkid=9752821 の展開ディレクトリを bin\azure\WebPICmdLine として設置してください。
+
+また、 http://phpazurecontrib.codeplex.com/ から php_azure.dll の最新版を入手し、bin\azure\php_azure.dll として設置してください。
+
+準備が整ったら、 zip 圧縮のソースディレクトリ内で、以下のコマンドを実行してください::
 
     cspack.exe \Path\To\OpenPNE\ServiceDefinition.csdef /role:WebRole;\Path\To\OpenPNE /out:OpenPNE3.cspkg
 
-その後、 ServiceConfiguration.cscfg をコピーしてください::
+ServiceConfiguration.cscfg をコピーしてください::
 
     copy \Path\To\OpenPNE\ServiceConfiguration.cscfg .
+
+README.azure を README.txt としてコピーしてください::
+
+    copy \Path\To\OpenPNE\README.azure README.txt
 
 最後に、このディレクトリを zip 圧縮してください。
