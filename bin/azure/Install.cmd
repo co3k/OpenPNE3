@@ -34,26 +34,22 @@ icacls %RoleRoot%\approot /grant "Everyone":F /T
 
 ECHO "Completed PHP Installation" >> log.txt
 
-REM avoid https://bugs.php.net/bug.php?id=60758
-
-ECHO /**/ >> lib/vendor/symfony/lib/config/sfDefineEnvironmentConfigHandler.class.php
-
 "%ProgramFiles(x86)%\php\v5.3\php.exe" -m >> log.txt
 
 ECHO "Starting OpenPNE Installation" >> log.txt
-
-copy "databases.yml" "../../config"
-copy "OpenPNE.yml" "../../config"
 
 cd "../../"
 
 md cache
 
-copy bin\azure\ProjectConfiguration.class.php config\ProjectConfiguration.class.php
+copy bin\azure\OpenPNE.yml config
+
+REM avoid https://bugs.php.net/bug.php?id=60758
+ECHO /**/ >> lib/vendor/symfony/lib/config/sfDefineEnvironmentConfigHandler.class.php
 
 "%ProgramFiles(x86)%\php\v5.3\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
 
-"%ProgramFiles(x86)%\php\v5.3\php.exe" symfony opPlugin:sync >>bin/azure/log.txt 2>>bin/azure/err.txt
+copy bin\azure\databases.yml config
 
 "%ProgramFiles(x86)%\php\v5.3\php.exe" bin/azure/checkDBExists.php
 IF ERRORLEVEL 1 (

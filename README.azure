@@ -78,7 +78,15 @@ Windows Azure 版では、通常の OpenPNE 3 に存在する以下の機能が�
 (開発者向け) Azure 版パッケージ作成手順
 =======================================
 
-http://go.microsoft.com/?linkid=9752821 の展開ディレクトリを bin\azure\WebPICmdLine として設置してください。
+以下のコマンドで、同梱の ProjectConfiguration.class.php を設置してください::
+
+    copy bin\azure\ProjectConfiguration.class.php config\ProjectConfiguration.class.php
+
+次に、バンドルプラグインをインストールします::
+
+    php.exe symfony symfony opPlugin:sync
+
+その後、 http://go.microsoft.com/?linkid=9752821 の展開ディレクトリを bin\azure\WebPICmdLine として設置してください。
 
 また、 http://phpazurecontrib.codeplex.com/ から php_azure.dll の最新版を入手し、bin\azure\php_azure.dll として設置してください。
 
