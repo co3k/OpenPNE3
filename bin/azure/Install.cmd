@@ -43,6 +43,8 @@ copy "OpenPNE.yml" "../../config"
 
 cd "../../"
 
+"%ProgramFiles(x86)%\php\v5.3\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
+
 "%ProgramFiles(x86)%\php\v5.3\php.exe" symfony opPlugin:sync >>bin/azure/log.txt 2>>bin/azure/err.txt
 
 "%ProgramFiles(x86)%\php\v5.3\php.exe" bin/azure/checkDBExists.php
@@ -54,8 +56,8 @@ IF ERRORLEVEL 1 (
     "%ProgramFiles(x86)%\php\v5.3\php.exe" symfony doctrine:build --all-classes --no-confirmation >>bin/azure/log.txt 2>>bin/azure/err.txt
 )
 
-"%RoleRoot%\bin\azure\php\php.exe" bin/azure/quickFixForeignKey.php
+"%ProgramFiles(x86)%\php\v5.3\php.exe" bin/azure/quickFixForeignKey.php
 
-"%RoleRoot%\bin\azure\php\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
+"%ProgramFiles(x86)%\php\v5.3\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
 
 ECHO "Completed OpenPNE Installation" >> bin/azure/log.txt

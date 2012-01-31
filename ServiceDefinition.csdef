@@ -36,6 +36,7 @@
         <Startup>
             <Task commandLine="azure\Env.cmd" executionContext="elevated" taskType="simple" />
             <Task commandLine="azure\Install.cmd" executionContext="elevated" taskType="simple" />
+            <Task commandLine="azure\Refresh.cmd" executionContext="elevated" taskType="background" />
         </Startup>
 
         <LocalResources>
