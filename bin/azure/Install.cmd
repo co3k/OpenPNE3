@@ -24,10 +24,6 @@ IF ERRORLEVEL 1 (
 
 cd ".."
 
-md cache
-
-copy bin\azure\ProjectConfiguration.class.php config\ProjectConfiguration.class.php
-
 icacls %RoleRoot%\approot /grant "Everyone":F /T
 %WINDIR%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /-"[fullPath='%ProgramFiles(x86)%\PHP\v5.3\php-cgi.exe'].environmentVariables.[name='RoleDeploymentID']" /commit:apphost
 %WINDIR%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%ProgramFiles(x86)%\PHP\v5.3\php-cgi.exe'].environmentVariables.[name='RoleDeploymentID',value='%RoleDeploymentID%']" /commit:apphost
@@ -50,6 +46,10 @@ copy "databases.yml" "../../config"
 copy "OpenPNE.yml" "../../config"
 
 cd "../../"
+
+md cache
+
+copy bin\azure\ProjectConfiguration.class.php config\ProjectConfiguration.class.php
 
 "%ProgramFiles(x86)%\php\v5.3\php.exe" symfony cc >>bin/azure/log.txt 2>>bin/azure/err.txt
 
