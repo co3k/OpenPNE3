@@ -13,6 +13,15 @@ if (!defined('E_DEPRECATED'))
   define('E_DEPRECATED', 8192);
 }
 
+if (@is_readable('/dev/urandom'))
+{
+    define('Auth_OpenID_RAND_SOURCE', '/dev/urandom');
+}
+else
+{
+    define('Auth_OpenID_RAND_SOURCE', null);
+}
+
 /**
  * opProjectConfiguration
  *
