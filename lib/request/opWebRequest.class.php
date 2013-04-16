@@ -22,7 +22,7 @@ class opWebRequest extends sfWebRequest
   const MOBILE_UID_COOKIE_NAME = 'op_mobile_uid';
 
   protected 
-    $userAgentMobileInstance = null;
+      $userAgentMobileInstance = null;
   
   protected 
     $SoftBankSSLSpecChangeDate = '2011/6/30 03:00:00 JST';
@@ -103,12 +103,7 @@ class opWebRequest extends sfWebRequest
 
   public function isMobile()
   {
-    if (opConfig::get('is_check_mobile_ip') && !$this->isMobileIPAddress())
-    {
-      return false;
-    }
-
-    return !($this->getMobile()->isNonMobile());
+    return opMobileUserAgent::getInstance()->isMobile();
   }
 
   public function isMobileIPAddress()

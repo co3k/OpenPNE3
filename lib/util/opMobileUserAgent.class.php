@@ -19,7 +19,8 @@ class opMobileUserAgent
 {
   protected static
     $instance = null,
-    $mobile = null;
+    $mobile = null,
+    $mobileDetector = null;
 
   protected function __construct()
   {
@@ -31,6 +32,8 @@ class opMobileUserAgent
     {
       self::$mobile = new Net_UserAgent_Mobile_NonMobile('');
     }
+
+    self::$mobileDetector = new Societo\Util\MobileBundle\MobileDetector();
   }
 
   public static function getInstance()
@@ -54,6 +57,11 @@ class opMobileUserAgent
   public function getMobile()
   {
     return self::$mobile;
+  }
+
+  public function isMobile()
+  {
+    return (self::$mobileDetector->isMobile() || !($this->getMobile()->isNonMobile()));
   }
 
   public function isCookie()
