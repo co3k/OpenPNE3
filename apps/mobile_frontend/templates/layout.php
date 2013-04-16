@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />
 <?php include_http_metas() ?>
 <?php include_title() ?>
 <?php if ($sf_request->getMobile()->isSoftBank() && $op_config['font_size']): ?>
